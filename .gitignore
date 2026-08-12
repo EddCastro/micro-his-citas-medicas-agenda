@@ -1,0 +1,16 @@
+# Configuracion local
+.env
+
+# Bases de datos locales
+database/*.sqlite
+database/*.db
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
