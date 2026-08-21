@@ -13,13 +13,12 @@ final class Appointment
     public const STATUS_CONFIRMED = 'confirmed';
     public const STATUS_CANCELLED = 'cancelled';
 
-    private string $status;
-
-    public function __construct(
+    private function __construct(
         private readonly int $patientId,
         private readonly int $doctorId,
         private readonly DateTimeImmutable $scheduledAt,
-        private readonly int $durationMinutes
+        private readonly int $durationMinutes,
+        private string $status
     ) {
         if ($patientId <= 0) {
             throw new DomainException('El paciente es obligatorio.');
@@ -33,11 +32,48 @@ final class Appointment
             throw new DomainException('La duracion debe ser mayor que cero.');
         }
 
+        if (!in_array($status, [
+            self::STATUS_PENDING,
+            self::STATUS_CONFIRMED,
+            self::STATUS_CANCELLED,
+        ], true)) {
+            throw new DomainException('El estado de la cita no es valido.');
+        }
+    }
+
+    public static function schedule(
+        int $patientId,
+        int $doctorId,
+        DateTimeImmutable $scheduledAt,
+        int $durationMinutes
+    ): self {
         if ($scheduledAt <= new DateTimeImmutable()) {
             throw new DomainException('La cita debe programarse en una fecha futura.');
         }
 
-        $this->status = self::STATUS_PENDING;
+        return new self(
+            $patientId,
+            $doctorId,
+            $scheduledAt,
+            $durationMinutes,
+            self::STATUS_PENDING
+        );
+    }
+
+    public static function restore(
+        int $patientId,
+        int $doctorId,
+        DateTimeImmutable $scheduledAt,
+        int $durationMinutes,
+        string $status
+    ): self {
+        return new self(
+            $patientId,
+            $doctorId,
+            $scheduledAt,
+            $durationMinutes,
+            $status
+        );
     }
 
     public function confirm(): void

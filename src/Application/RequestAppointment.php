@@ -32,7 +32,7 @@ final class RequestAppointment
             throw new DomainException('El horario seleccionado no esta disponible.');
         }
 
-        $appointment = new Appointment(
+        $appointment = Appointment::schedule(
             $patientId,
             $doctorId,
             $scheduledAt,
