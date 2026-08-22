@@ -1,0 +1,25 @@
+﻿@startuml
+
+actor Usuario
+participant Controller
+participant RequestAppointment
+participant AvailabilityRepository
+participant Appointment
+participant AppointmentRepository
+
+Usuario -> Controller: solicitar cita
+Controller -> RequestAppointment: execute()
+
+RequestAppointment -> AvailabilityRepository: isAvailable()
+
+AvailabilityRepository --> RequestAppointment: disponible
+
+RequestAppointment -> Appointment: schedule()
+
+RequestAppointment -> AppointmentRepository: save()
+
+AppointmentRepository --> Controller: appointmentId
+
+Controller --> Usuario: cita creada
+
+@enduml

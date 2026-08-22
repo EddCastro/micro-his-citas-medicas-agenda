@@ -1,0 +1,41 @@
+﻿@startuml
+
+class Appointment {
+- patientId : int
+- doctorId : int
+- scheduledAt : DateTime
+- durationMinutes : int
+- status : string
+
++ schedule()
++ confirm()
++ cancel()
+}
+
+interface AppointmentRepository {
++ save()
++ findById()
++ update()
+}
+
+interface AvailabilityRepository {
++ isAvailable()
+}
+
+class RequestAppointment
+class ConfirmAppointment
+class CancelAppointment
+
+class PdoAppointmentRepository
+class PdoAvailabilityRepository
+
+AppointmentRepository <|.. PdoAppointmentRepository
+AvailabilityRepository <|.. PdoAvailabilityRepository
+
+RequestAppointment --> AppointmentRepository
+RequestAppointment --> AvailabilityRepository
+
+ConfirmAppointment --> AppointmentRepository
+CancelAppointment --> AppointmentRepository
+
+@enduml

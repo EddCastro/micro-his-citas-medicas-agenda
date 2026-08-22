@@ -1,0 +1,33 @@
+﻿@startuml
+
+package Presentation {
+[AppointmentController]
+}
+
+package Application {
+[RequestAppointment]
+[ConfirmAppointment]
+[CancelAppointment]
+}
+
+package Domain {
+[Appointment]
+[Repository Interfaces]
+}
+
+package Persistence {
+[PdoAppointmentRepository]
+[PdoAvailabilityRepository]
+[SQLite]
+}
+
+[AppointmentController] --> [RequestAppointment]
+
+[RequestAppointment] --> [Appointment]
+[RequestAppointment] --> [Repository Interfaces]
+
+[Repository Interfaces] <|.. [PdoAppointmentRepository]
+
+[PdoAppointmentRepository] --> SQLite
+
+@enduml

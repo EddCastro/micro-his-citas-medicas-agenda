@@ -1,0 +1,27 @@
+﻿@startuml
+left to right direction
+
+actor Paciente
+actor Medico
+actor Sistema
+
+rectangle "Micro-HIS Citas Médicas" {
+
+usecase "Solicitar cita" as UC1
+usecase "Validar disponibilidad" as UC2
+usecase "Confirmar cita" as UC3
+usecase "Cancelar cita" as UC4
+usecase "Detectar colisión" as UC5
+
+}
+
+Paciente --> UC1
+Medico --> UC2
+Sistema --> UC5
+
+UC1 --> UC2
+UC3 --> UC2
+UC4 --> UC1
+UC2 --> UC5
+
+@enduml
