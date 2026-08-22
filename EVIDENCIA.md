@@ -1,25 +1,37 @@
-﻿# Evidencia
+﻿# Evidencia de implementación
 
-## Validación
+## Módulo
+Micro-HIS Citas Médicas y Agenda
 
-Comando:
+## Arquitectura
+
+- Domain: reglas del negocio y entidad Appointment.
+- Application: casos de uso para solicitar, confirmar y cancelar citas.
+- Persistence: repositorios PDO SQLite y dobles InMemory.
+- Presentation: controlador de entrada.
+
+## Validaciones realizadas
+
+Ejecutado:
 
 php tests/run.php
 
 Resultado:
 
-4 aprobadas, 0 fallidas.
+4 pruebas aprobadas.
+0 pruebas fallidas.
 
-## Arquitectura
+Casos comprobados:
 
-Domain:
-Reglas del negocio.
+- Solicitud, confirmación y cancelación de cita.
+- Rechazo por horario no disponible.
+- Rechazo de fecha pasada.
+- Error de persistencia simulado.
 
-Application:
-Casos de uso.
+## Persistencia
 
-Persistence:
-Repositorios PDO e InMemory.
+SQLite mediante PDO con sentencias preparadas.
 
-Presentation:
-Entrada del flujo de citas.
+## Repositorio
+
+https://github.com/EddCastro/micro-his-citas-medicas-agenda
