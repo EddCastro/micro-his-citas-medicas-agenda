@@ -1,41 +1,96 @@
-﻿@startuml
+@startuml
+title ASII-05 - Diagrama de clases del diseno
 
-class Appointment {
-- patientId : int
-- doctorId : int
-- scheduledAt : DateTime
-- durationMinutes : int
-- status : string
+skinparam shadowing false
+skinparam classAttributeIconSize 0
 
-+ schedule()
-+ confirm()
-+ cancel()
+package Presentation {
+  class AppointmentController {
+    - requestAppointment : RequestAppointment
+    + create(data : array) : int
+  }
 }
 
-interface AppointmentRepository {
-+ save()
-+ findById()
-+ update()
+package Application {
+  class RequestAppointment {
+    - appointments : AppointmentRepository
+    - availability : AvailabilityRepository
+    + execute(patientId, doctorId, scheduledAt, durationMinutes) : int
+  }
+  class ConfirmAppointment {
+    - appointments : AppointmentRepository
+    + execute(appointmentId : int) : void
+  }
+  class CancelAppointment {
+    - appointments : AppointmentRepository
+    + execute(appointmentId : int) : void
+  }
 }
 
-interface AvailabilityRepository {
-+ isAvailable()
+package Domain {
+  class Appointment {
+    + {static} STATUS_PENDING : string
+    + {static} STATUS_CONFIRMED : string
+    + {static} STATUS_CANCELLED : string
+    --
+    - patientId : int
+    - doctorId : int
+    - scheduledAt : DateTimeImmutable
+    - durationMinutes : int
+    - status : string
+    --
+    - __construct(...)
+    + {static} schedule(...) : Appointment
+    + {static} restore(...) : Appointment
+    + confirm() : void
+    + cancel() : void
+    + status() : string
+  }
+
+  interface AppointmentRepository {
+    + save(appointment) : int
+    + findById(id) : Appointment
+    + update(id, appointment) : void
+  }
+
+  interface AvailabilityRepository {
+    + isAvailable(doctorId, scheduledAt, durationMinutes) : bool
+  }
 }
 
-class RequestAppointment
-class ConfirmAppointment
-class CancelAppointment
+package Persistence {
+  class PdoAppointmentRepository
+  class PdoAvailabilityRepository
+  class InMemoryAppointmentRepository
+  class InMemoryAvailabilityRepository
+}
 
-class PdoAppointmentRepository
-class PdoAvailabilityRepository
+AppointmentController --> RequestAppointment
+
+RequestAppointment ..> AppointmentRepository
+RequestAppointment ..> AvailabilityRepository
+RequestAppointment ..> Appointment
+ConfirmAppointment ..> AppointmentRepository
+CancelAppointment ..> AppointmentRepository
 
 AppointmentRepository <|.. PdoAppointmentRepository
+AppointmentRepository <|.. InMemoryAppointmentRepository
 AvailabilityRepository <|.. PdoAvailabilityRepository
+AvailabilityRepository <|.. InMemoryAvailabilityRepository
 
-RequestAppointment --> AppointmentRepository
-RequestAppointment --> AvailabilityRepository
+note bottom of Appointment
+Constructor privado.
+schedule() exige fecha futura
+y estado inicial pendiente.
+restore() reconstruye una cita
+ya persistida sin revalidar la
+fecha.
+end note
 
-ConfirmAppointment --> AppointmentRepository
-CancelAppointment --> AppointmentRepository
+note bottom of Persistence
+Las implementaciones dependen de
+los contratos declarados en Domain.
+Domain no conoce PDO ni SQL.
+end note
 
 @enduml

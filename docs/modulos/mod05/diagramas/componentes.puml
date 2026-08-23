@@ -1,33 +1,68 @@
-﻿@startuml
+@startuml
+title ASII-05 - Vista de componentes por capas
 
-package Presentation {
-[AppointmentController]
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "Presentation" {
+  [AppointmentController]
 }
 
-package Application {
-[RequestAppointment]
-[ConfirmAppointment]
-[CancelAppointment]
+package "Application" {
+  [RequestAppointment]
+  [ConfirmAppointment]
+  [CancelAppointment]
 }
 
-package Domain {
-[Appointment]
-[Repository Interfaces]
+package "Domain" {
+  [Appointment]
+  interface "AppointmentRepository" as IRepo
+  interface "AvailabilityRepository" as IAvail
 }
 
-package Persistence {
-[PdoAppointmentRepository]
-[PdoAvailabilityRepository]
-[SQLite]
+package "Persistence" {
+  [PdoAppointmentRepository]
+  [PdoAvailabilityRepository]
+  [InMemoryAppointmentRepository]
+  [InMemoryAvailabilityRepository]
 }
+
+package "Configuracion" {
+  [config/env.php]
+  [.env]
+}
+
+database "SQLite\ndatabase/schema.sql" as DB
 
 [AppointmentController] --> [RequestAppointment]
 
+[RequestAppointment] --> IRepo
+[RequestAppointment] --> IAvail
 [RequestAppointment] --> [Appointment]
-[RequestAppointment] --> [Repository Interfaces]
+[ConfirmAppointment] --> IRepo
+[CancelAppointment] --> IRepo
 
-[Repository Interfaces] <|.. [PdoAppointmentRepository]
+IRepo <|.. [PdoAppointmentRepository]
+IRepo <|.. [InMemoryAppointmentRepository]
+IAvail <|.. [PdoAvailabilityRepository]
+IAvail <|.. [InMemoryAvailabilityRepository]
 
-[PdoAppointmentRepository] --> SQLite
+[PdoAppointmentRepository] --> DB
+[PdoAvailabilityRepository] --> DB
+
+[.env] --> [config/env.php]
+[config/env.php] --> DB : DB_DSN
+
+note bottom of Domain
+Los contratos se declaran aqui.
+Persistence depende de Domain,
+nunca al reves.
+end note
+
+note right of Persistence
+Las implementaciones en memoria
+cumplen los mismos contratos y
+permiten probar sin base de datos.
+end note
 
 @enduml

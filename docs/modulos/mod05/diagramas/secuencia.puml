@@ -1,25 +1,60 @@
-﻿@startuml
+@startuml
+title ASII-05 - Secuencia de solicitud de cita
 
-actor Usuario
-participant Controller
-participant RequestAppointment
-participant AvailabilityRepository
-participant Appointment
-participant AppointmentRepository
+skinparam shadowing false
 
-Usuario -> Controller: solicitar cita
-Controller -> RequestAppointment: execute()
+actor "Personal administrativo" as Usuario
+participant "AppointmentController" as Controller
+participant "RequestAppointment" as UseCase
+participant "AvailabilityRepository" as Availability
+participant "Appointment" as Entidad
+participant "AppointmentRepository" as Repo
+database "SQLite" as DB
 
-RequestAppointment -> AvailabilityRepository: isAvailable()
+Usuario -> Controller : create(datos)
+activate Controller
 
-AvailabilityRepository --> RequestAppointment: disponible
+Controller -> Controller : convierte a tipos del dominio
+Controller -> UseCase : execute(patientId, doctorId,\nscheduledAt, durationMinutes)
+activate UseCase
 
-RequestAppointment -> Appointment: schedule()
+UseCase -> Availability : isAvailable(doctorId,\nscheduledAt, durationMinutes)
+activate Availability
+Availability -> DB : SELECT sobre doctor_availability
+DB --> Availability : jornada encontrada
+Availability -> DB : SELECT de cruces\n(excluye canceladas)
+DB --> Availability : conteo de colisiones
+Availability --> UseCase : true / false
+deactivate Availability
 
-RequestAppointment -> AppointmentRepository: save()
+alt Horario no disponible
+    UseCase --> Controller : DomainException
+    Controller --> Usuario : error: horario no disponible
+else Horario disponible
+    UseCase -> Entidad : schedule(patientId, doctorId,\nscheduledAt, durationMinutes)
+    activate Entidad
+    Entidad -> Entidad : valida fecha futura,\nduracion y participantes
+    Entidad --> UseCase : Appointment en estado pendiente
+    deactivate Entidad
 
-AppointmentRepository --> Controller: appointmentId
+    UseCase -> Repo : save(appointment)
+    activate Repo
+    Repo -> DB : INSERT preparado
+    DB --> Repo : lastInsertId
+    Repo --> UseCase : appointmentId
+    deactivate Repo
 
-Controller --> Usuario: cita creada
+    UseCase --> Controller : appointmentId
+    Controller --> Usuario : cita registrada
+end
+
+deactivate UseCase
+deactivate Controller
+
+note over UseCase, Repo
+El retorno recorre las mismas capas
+que la llamada. La persistencia nunca
+responde directamente a Presentation.
+end note
 
 @enduml

@@ -1,24 +1,59 @@
-﻿@startuml
+@startuml
+title ASII-05 - Vista de datos (database/schema.sql)
 
-entity appointments {
-* id
---
-patient_id
-doctor_id
-scheduled_at
-duration_minutes
-status
+skinparam shadowing false
+hide circle
+
+entity "appointments" as appointments {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * patient_id : INTEGER <<NOT NULL>>
+  * doctor_id : INTEGER <<NOT NULL>>
+  * scheduled_at : TEXT <<NOT NULL>>
+  * duration_minutes : INTEGER <<NOT NULL>>
+  * status : TEXT <<NOT NULL>>
+  --
+  CHECK duration_minutes > 0
+  CHECK status IN (pending,
+        confirmed, cancelled)
+  --
+  INDEX idx_appointments_doctor_scheduled_at
+        (doctor_id, scheduled_at)
 }
 
-entity doctor_availability {
-* id
---
-doctor_id
-weekday
-start_time
-end_time
+entity "doctor_availability" as availability {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * doctor_id : INTEGER <<NOT NULL>>
+  * weekday : INTEGER <<NOT NULL>>
+  * start_time : TEXT <<NOT NULL>>
+  * end_time : TEXT <<NOT NULL>>
+  --
+  CHECK weekday BETWEEN 0 AND 6
+  CHECK start_time < end_time
+  --
+  INDEX idx_doctor_availability_doctor_weekday
+        (doctor_id, weekday)
 }
 
-appointments }o--|| doctor_availability : valida horario
+appointments .. availability : relacion logica\npor doctor_id
+
+note bottom
+No existe clave foranea entre ambas tablas.
+La correspondencia se resuelve en la consulta
+de disponibilidad comparando doctor_id.
+
+patient_id y doctor_id son referencias a
+entidades administradas por otros modulos del
+sistema hospitalario, por lo que este esquema
+no las restringe con FK.
+end note
+
+note right of appointments
+scheduled_at se almacena como texto
+en formato Y-m-d H:i:s.
+La duracion se guarda en minutos y el
+fin de la cita se calcula en consulta.
+end note
 
 @enduml
