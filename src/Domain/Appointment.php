@@ -82,6 +82,10 @@ final class Appointment
             throw new DomainException('Una cita cancelada no puede confirmarse.');
         }
 
+        if ($this->status === self::STATUS_CONFIRMED) {
+            throw new DomainException('La cita ya se encuentra confirmada.');
+        }
+
         $this->status = self::STATUS_CONFIRMED;
     }
 
