@@ -1,0 +1,61 @@
+﻿@startuml
+title Diagrama de Casos de Uso\nSolicitud, validación y confirmación o cancelación de cita
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "Paciente" as Paciente
+actor "Recepcionista" as Recepcionista
+actor "Módulo de Médicos\ny Disponibilidad" as Disponibilidad
+actor "Sistema de\nNotificaciones" as Notificaciones
+
+rectangle "ASII-05: Citas médicas y agenda" {
+
+  usecase "CU-01\nSolicitar cita" as CU01
+  usecase "CU-02\nConsultar disponibilidad\nmédica" as CU02
+  usecase "CU-03\nConfirmar cita" as CU03
+  usecase "CU-04\nCancelar cita" as CU04
+  usecase "CU-05\nValidar paciente y\ndatos de solicitud" as CU05
+  usecase "CU-06\nRegistrar cambio\nde estado" as CU06
+  usecase "CU-07\nNotificar resultado" as CU07
+}
+
+Paciente -- CU01
+Paciente -- CU03
+Paciente -- CU04
+
+Recepcionista -- CU01
+Recepcionista -- CU03
+Recepcionista -- CU04
+
+CU01 ..> CU05 : <<include>>
+CU01 ..> CU02 : <<include>>
+
+CU03 ..> CU06 : <<include>>
+CU03 ..> CU07 : <<include>>
+
+CU04 ..> CU06 : <<include>>
+CU04 ..> CU07 : <<include>>
+
+Disponibilidad -- CU02
+Notificaciones -- CU07
+
+legend right
+  <b>Objetivo</b>
+  Registrar una solicitud válida y comprobar
+  que exista disponibilidad médica.
+
+  <b>Excepciones principales</b>
+  - Paciente inexistente o inactivo.
+  - Médico o especialidad no válidos.
+  - Horario no disponible.
+  - Cruce con otra cita activa.
+
+  <b>Resultados</b>
+  - La cita puede quedar confirmada.
+  - La cita puede quedar cancelada.
+  - La cancelación conserva su motivo.
+endlegend
+
+@enduml

@@ -1,0 +1,162 @@
+﻿@startuml
+title Diagrama de Secuencia Global\nSolicitud, validación y confirmación o cancelación de cita
+
+autonumber
+hide footbox
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor Paciente
+actor Recepcionista
+
+participant "Frontend\nVue 3" as Frontend
+participant "API\nLaravel" as API
+participant "Servicio de\nPacientes" as Pacientes
+participant "Servicio de Médicos\ny Disponibilidad" as Disponibilidad
+participant "Servicio de\nCitas" as Citas
+database "Base de Datos\ndel Tenant" as BD
+participant "Servicio de\nNotificaciones" as Notificaciones
+
+== Solicitud de cita ==
+
+Paciente -> Recepcionista: Solicita una cita médica
+
+Recepcionista -> Frontend: Ingresa paciente, médico,\nespecialidad, fecha y hora
+
+Frontend -> API: POST /api/v1/appointments
+
+API -> API: Validar JWT, permisos\ny X-Tenant-ID
+
+API -> Pacientes: Validar paciente
+
+Pacientes -> BD: Consultar paciente por\ntenant_id y patient_id
+
+BD --> Pacientes: Datos del paciente
+
+alt Paciente inexistente o inactivo
+
+    Pacientes --> API: Paciente no válido
+
+    API --> Frontend: Error de validación
+
+    Frontend --> Recepcionista: Mostrar paciente inexistente\no inactivo
+
+else Paciente válido
+
+    Pacientes --> API: Paciente válido
+
+    API -> Disponibilidad: Validar médico, especialidad\ny horario solicitado
+
+    Disponibilidad -> BD: Consultar médico, especialidad,\nhorario y excepciones
+
+    BD --> Disponibilidad: Datos de disponibilidad
+
+    alt Médico o especialidad no válidos
+
+        Disponibilidad --> API: Datos no válidos
+
+        API --> Frontend: Error de médico\no especialidad
+
+        Frontend --> Recepcionista: Mostrar error
+
+    else Médico y especialidad válidos
+
+        Disponibilidad -> BD: Buscar citas activas que se\ncrucen con el horario
+
+        BD --> Disponibilidad: Resultado de cruces
+
+        alt Horario no disponible o con cruce
+
+            Disponibilidad --> API: Horario no disponible
+
+            API --> Frontend: Informar falta\nde disponibilidad
+
+            Frontend --> Recepcionista: Mostrar horario no disponible
+
+        else Horario disponible
+
+            Disponibilidad --> API: Horario disponible
+
+            API -> Citas: Crear cita pendiente
+
+            Citas -> BD: INSERT appointments\nstatus = pendiente
+
+            BD --> Citas: Cita creada
+
+            Citas -> BD: INSERT appointment_status_history
+
+            BD --> Citas: Historial registrado
+
+            Citas --> API: Cita pendiente creada
+
+            API -> Notificaciones: Notificar registro de cita
+
+            Notificaciones --> Paciente: Enviar información de la cita
+
+            API --> Frontend: Cita registrada correctamente
+
+            Frontend --> Recepcionista: Mostrar cita pendiente
+
+            == Confirmación o cancelación ==
+
+            alt Paciente confirma la cita
+
+                Paciente -> Recepcionista: Confirma asistencia
+
+                Recepcionista -> Frontend: Confirmar cita
+
+                Frontend -> API: PATCH /api/v1/appointments/{id}/confirm
+
+                API -> Citas: Confirmar cita
+
+                Citas -> BD: UPDATE status = confirmada\ny confirmed_at
+
+                Citas -> BD: INSERT appointment_status_history
+
+                BD --> Citas: Confirmación registrada
+
+                Citas --> API: Cita confirmada
+
+                API -> Notificaciones: Enviar confirmación
+
+                Notificaciones --> Paciente: Cita confirmada
+
+                API --> Frontend: Confirmación exitosa
+
+            else Paciente cancela la cita
+
+                Paciente -> Recepcionista: Solicita cancelación\ne indica motivo
+
+                Recepcionista -> Frontend: Cancelar cita
+
+                Frontend -> API: PATCH /api/v1/appointments/{id}/cancel
+
+                API -> Citas: Cancelar cita con motivo
+
+                Citas -> BD: UPDATE status = cancelada,\ncancelled_at y motivo
+
+                Citas -> BD: INSERT appointment_status_history
+
+                BD --> Citas: Cancelación registrada
+
+                Citas --> API: Cita cancelada
+
+                API -> Notificaciones: Enviar cancelación
+
+                Notificaciones --> Paciente: Cita cancelada
+
+                API --> Frontend: Cancelación exitosa
+
+            else Paciente no responde
+
+                Citas -> BD: Mantener estado pendiente
+
+            end
+
+        end
+
+    end
+
+end
+
+@enduml
