@@ -1,0 +1,48 @@
+﻿@startuml
+title Diagrama de Actividad\nSolicitud, validación y confirmación o cancelación de cita
+
+start
+
+:Paciente solicita cita;
+:Recepcionista recibe la solicitud;
+:Ingresar datos del paciente,\nmédico, especialidad,\nfecha y hora deseada;
+
+if (¿Paciente válido y activo?) then (Sí)
+  :Consultar disponibilidad médica;
+  if (¿Médico y especialidad válidos?) then (Sí)
+    if (¿Horario disponible?) then (Sí)
+      :Registrar cita en estado pendiente;
+      :Notificar cita registrada;
+
+      if (¿Paciente confirma la cita?) then (Sí)
+        :Actualizar estado a confirmada;
+        :Registrar cambio de estado;
+        :Enviar notificación de confirmación;
+        stop
+      else (No)
+        if (¿Paciente cancela la cita?) then (Sí)
+          :Actualizar estado a cancelada;
+          :Registrar motivo de cancelación;
+          :Registrar cambio de estado;
+          :Enviar notificación de cancelación;
+          stop
+        else (Sin respuesta)
+          :Mantener cita en estado pendiente;
+          stop
+        endif
+      endif
+
+    else (No)
+      :Informar que no hay disponibilidad;
+      stop
+    endif
+  else (No)
+    :Informar médico o especialidad no válidos;
+    stop
+  endif
+else (No)
+  :Informar paciente inexistente o inactivo;
+  stop
+endif
+
+@enduml
