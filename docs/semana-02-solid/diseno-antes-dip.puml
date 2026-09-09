@@ -1,0 +1,24 @@
+@startuml
+
+title ASII-05 - Antes de aplicar DIP
+
+rectangle AppointmentController
+rectangle Patient
+rectangle Doctor
+rectangle Appointment
+rectangle AppointmentStatusHistory
+rectangle LaravelNotification
+rectangle BaseDeDatos
+
+AppointmentController --> Patient : consulta
+AppointmentController --> Doctor : consulta
+AppointmentController --> Appointment : crea y modifica
+AppointmentController --> AppointmentStatusHistory : registra historial
+AppointmentController --> LaravelNotification : envia notificacion
+
+Patient --> BaseDeDatos
+Doctor --> BaseDeDatos
+Appointment --> BaseDeDatos
+AppointmentStatusHistory --> BaseDeDatos
+
+@enduml

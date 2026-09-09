@@ -1,0 +1,28 @@
+@startuml
+
+title ASII-05 - Despues de aplicar DIP
+
+top to bottom direction
+
+rectangle AppointmentController
+
+rectangle RequestAppointment
+rectangle ConfirmAppointment
+rectangle CancelAppointment
+
+rectangle ContratosDelModulo
+rectangle AdaptadoresDeInfraestructura
+rectangle BaseDeDatosYServicios
+
+AppointmentController --> RequestAppointment
+AppointmentController --> ConfirmAppointment
+AppointmentController --> CancelAppointment
+
+RequestAppointment --> ContratosDelModulo : depende de abstracciones
+ConfirmAppointment --> ContratosDelModulo : depende de abstracciones
+CancelAppointment --> ContratosDelModulo : depende de abstracciones
+
+AdaptadoresDeInfraestructura --> ContratosDelModulo : implementan
+AdaptadoresDeInfraestructura --> BaseDeDatosYServicios : utilizan
+
+@enduml
