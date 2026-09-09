@@ -1,0 +1,47 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Recepcionista" as recep
+actor "Médico" as medico
+actor "Enfermera" as enfermera
+actor "Paciente" as paciente
+actor "Administrador" as admin
+actor "Sistema de\nNotificaciones" as notificaciones
+
+rectangle "Citas Médicas y Agenda" {
+  usecase "CU-01: Consultar\ndisponibilidad médica" as UC01
+  usecase "CU-02: Programar\ncita médica" as UC02
+  usecase "CU-03: Consultar\nagenda médica" as UC03
+  usecase "CU-04: Confirmar\ncita" as UC04
+  usecase "CU-05: Cancelar\ncita" as UC05
+  usecase "CU-06: Solicitar\nreagendamiento" as UC06
+  usecase "CU-07: Reagendar\ncita" as UC07
+  usecase "CU-08: Registrar paciente\nen lista de espera" as UC08
+  usecase "CU-09: Ofrecer\nespacio liberado" as UC09
+  usecase "CU-10: Aceptar\nespacio liberado" as UC10
+  usecase "CU-11: Configurar reglas\ndel módulo" as UC11
+}
+
+recep --> UC01
+recep --> UC02
+recep --> UC05
+recep --> UC07
+recep --> UC08
+
+medico --> UC03
+enfermera --> UC04
+
+paciente --> UC06
+paciente --> UC10
+
+admin --> UC11
+
+UC05 ..> UC09 : libera horario
+UC06 ..> UC07 : solicita cambio
+UC07 ..> UC01 : valida disponibilidad
+UC08 ..> UC09 : paciente en espera
+UC09 --> notificaciones
+UC09 ..> UC10 : envía oferta
+
+@enduml
