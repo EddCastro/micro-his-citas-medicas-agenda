@@ -14,10 +14,12 @@ de Análisis de Sistemas II.
 ## Flujo de ramas
 
 ```
-main ──────────────────────────────── base estable
-  └── developer ───────────────────── integración de entregas
-        ├── feature/week-01-uml ───── PR #1
-        └── feature/week-02-solid ─── PR #2
+main ─────────────────────────────────────── base estable
+  └── developer ──────────────────────────── integración de entregas
+        ├── feature/week-01-uml ──────────── PR #1
+        ├── feature/week-02-solid ────────── PR #2
+        ├── feature/week-03-arquitectura ─── PR #3
+        └── feature/week-04-capas-repository  PR #4
 ```
 
 Cada semana se desarrolla en su propia rama `feature/week-NN-tema`, con commits
@@ -29,8 +31,10 @@ separados por artefacto, y se integra a `developer` mediante pull request.
 |---|---|---|---|
 | 1 | Conceptos generales, orientación a objetos y UML | [`docs/semana-01-uml`](docs/semana-01-uml) | #1 |
 | 2 | Proceso y modelo de diseño; principios SOLID | [`docs/semana-02-solid`](docs/semana-02-solid) | #2 |
+| 3 | Diseño arquitectónico, vistas y patrones | [`docs/semana-03-arquitectura`](docs/semana-03-arquitectura) | #3 |
+| 4 | Arquitectura en capas y patrón Repository | [`docs/semana-04-capas-repository`](docs/semana-04-capas-repository) | #4 |
 
-Ambas carpetas están disponibles en la rama `developer`.
+Todas las carpetas están disponibles en la rama `developer`.
 
 ### Semana 1 — UML
 
@@ -45,11 +49,24 @@ Aplica el principio de inversión de dependencias al mismo flujo: 16 requisitos
 funcionales, 12 no funcionales, 26 criterios de aceptación, la fuente del
 principio y el diseño antes y después de aplicarlo.
 
+### Semana 3 — Arquitectura
+
+Vista arquitectónica de alto nivel del módulo dentro del Sistema Hospitalario
+Integrado, con sus dependencias hacia usuarios, permisos, pacientes, médicos,
+notificaciones y auditoría, más el diagrama de componentes por capas.
+
+### Semana 4 — Capas y Repository
+
+Responsabilidades de las capas Presentation, Application, Domain y
+Persistence; contratos Repository declarados en el dominio; decisión
+arquitectónica con alternativas descartadas; diagramas de clases, secuencia y
+vista de datos; y evidencia de ejecución de las pruebas.
+
 ## Micro-HIS en PHP vanilla
 
-La rama `main` contiene además el micro-monolito desarrollado como actividad
-independiente: PHP 8.2 sin framework, cuatro capas separadas, PDO con
-sentencias preparadas y diez pruebas automatizadas.
+La rama `main` contiene el micro-monolito que sustenta las semanas 3 y 4:
+PHP 8.2 sin framework, cuatro capas separadas, PDO con sentencias preparadas y
+diez pruebas automatizadas.
 
 ```powershell
 git clone https://github.com/EddCastro/micro-his-citas-medicas-agenda.git
@@ -64,7 +81,7 @@ Su documentación está en [`docs/modulos/mod05`](docs/modulos/mod05).
 
 Los diagramas se entregan como fuentes editables `.puml` acompañadas de sus
 exportaciones `.png`. Cada semana incluye además su declaración de uso de
-inteligencia artificial y una guía de defensa oral.
+inteligencia artificial.
 
 ## Datos
 
