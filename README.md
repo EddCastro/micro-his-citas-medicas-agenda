@@ -20,7 +20,8 @@ main ─────────────────────────
         ├── feature/week-02-solid ─────────── PR #2
         ├── feature/week-03-arquitectura ──── PR #3
         ├── feature/week-04-capas-repository  PR #4
-        └── feature/week-05-api-microservicios PR #5
+        ├── feature/week-05-api-microservicios PR #5
+        └── feature/week-06-parcial ───────── PR #6
 ```
 
 Cada semana se desarrolla en su propia rama `feature/week-NN-tema`, con commits
@@ -35,6 +36,7 @@ separados por artefacto, y se integra a `developer` mediante pull request.
 | 3 | Diseño arquitectónico, vistas y patrones | [`docs/semana-03-arquitectura`](docs/semana-03-arquitectura) | #3 |
 | 4 | Arquitectura en capas y patrón Repository | [`docs/semana-04-capas-repository`](docs/semana-04-capas-repository) | #4 |
 | 5 | Cliente-servidor, API REST, microservicios e integración | [`docs/semana-05-api-microservicios`](docs/semana-05-api-microservicios) | #5 |
+| 6 | Primera evaluación parcial | [`docs/semana-06-parcial`](docs/semana-06-parcial) | #6 |
 
 Todas las carpetas están disponibles en la rama `developer`.
 
@@ -74,12 +76,21 @@ consistencia; y ruta de migración por etapas reversibles.
 La conclusión es que el módulo **no se extrae** como microservicio en esta
 etapa, porque ninguno de los umbrales definidos se alcanza.
 
-El detalle de esta semana reside también en el repositorio grupal, en la rama
-`feature/asii-05-semana-05-contrato-api-eddcastro`.
+### Semana 6 — Primera evaluación parcial
+
+Defensa de la arquitectura conectando actores, UML, requisitos, SOLID, capas,
+Repository y contrato de API. Incluye presentación de ocho diapositivas con
+notas del orador, un diagrama trazable que recorre las seis semanas hasta la
+evidencia ejecutable, y una matriz decisión → evidencia con 36 entradas.
+
+El **cambio práctico defendido** cierra la condición de carrera declarada como
+limitación desde la semana 3: bloqueo pesimista sobre la agenda del médico más
+un índice único parcial en la base de datos, con seis pruebas de integración
+que lo evidencian.
 
 ## Micro-HIS en PHP vanilla
 
-La rama `main` contiene el micro-monolito que sustenta las semanas 3 a 5:
+La rama `main` contiene el micro-monolito que sustenta las semanas 3 a 6:
 PHP 8.2 sin framework, cuatro capas separadas, PDO con sentencias preparadas y
 diez pruebas automatizadas.
 
@@ -91,6 +102,12 @@ php tests/all.php
 ```
 
 Su documentación está en [`docs/modulos/mod05`](docs/modulos/mod05).
+
+## Implementación en el repositorio grupal
+
+El módulo también está implementado sobre Laravel dentro del repositorio del
+proyecto final, con 59 pruebas propias distribuidas en dominio, aplicación,
+integración y concurrencia.
 
 ## Artefactos
 
