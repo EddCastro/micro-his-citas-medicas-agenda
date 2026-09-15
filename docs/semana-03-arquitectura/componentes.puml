@@ -1,0 +1,63 @@
+@startuml
+title ASII-05 - Vista de componentes dentro del HIS
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor "Usuario autorizado" as Usuario
+
+package "Sistema Hospitalario Integrado" {
+
+  component "Frontend Vue 3" as Front
+
+  package "Middleware" {
+    component "TenantMiddleware\nX-Tenant-ID" as MwTenant
+    component "JwtAuth" as MwJwt
+  }
+
+  package "ASII-05 - Citas medicas y agenda" {
+    component "AppointmentController\nFormRequests" as Ctrl
+    component "Casos de uso\nSolicitar, Confirmar, Cancelar,\nReagendar, Consultar" as Uso
+    component "Dominio\nAppointment, AppointmentStatus" as Dom
+    component "Contratos\nAppointmentRepository\nDoctorAvailabilityRepository\nTenantContext" as Contratos
+    component "Adaptadores Eloquent" as Infra
+  }
+
+  component "ASII-01\nUsuarios y tenants" as M01
+  component "ASII-02\nRBAC" as M02
+  component "ASII-03\nPacientes" as M03
+  component "ASII-04\nMedicos y especialidades" as M04
+}
+
+database "PostgreSQL\nappointments\ndoctor_availabilities" as DB
+
+Usuario --> Front
+Front --> MwTenant : /api/v1
+MwTenant --> MwJwt
+MwJwt --> Ctrl
+
+Ctrl --> Uso
+Uso --> Dom
+Uso ..> Contratos
+Contratos <|.. Infra
+Infra --> DB
+
+MwTenant ..> M01 : valida tenant
+MwJwt ..> M02 : permisos
+Infra ..> M03 : patients
+Infra ..> M04 : doctors, specialties
+
+note bottom of Contratos
+Declarados en Domain.
+Infrastructure depende de ellos,
+nunca al reves.
+end note
+
+note bottom of M04
+La disponibilidad medica todavia no
+se expone en el backend Laravel, por
+lo que ASII-05 mantiene su propia
+tabla tras un contrato sustituible.
+end note
+
+@enduml
