@@ -1,0 +1,101 @@
+@startuml
+title ASII-05 - Secuencia de solicitud de cita
+
+skinparam shadowing false
+
+actor "Personal administrativo" as Usuario
+participant "TenantMiddleware" as Tenant
+participant "JwtAuth" as Jwt
+participant "AppointmentController" as Ctrl
+participant "StoreAppointmentRequest" as Req
+participant "RequestAppointment" as UC
+participant "DoctorAvailabilityRepository" as Disp
+participant "Appointment" as Ent
+participant "AppointmentRepository" as Repo
+database "PostgreSQL" as DB
+
+Usuario -> Tenant : POST /api/v1/appointments\nX-Tenant-ID
+activate Tenant
+Tenant -> DB : valida el tenant
+DB --> Tenant : tenant encontrado
+Tenant -> Jwt : continua
+deactivate Tenant
+
+activate Jwt
+Jwt -> Jwt : valida el token
+Jwt -> Ctrl : peticion autorizada
+deactivate Jwt
+
+activate Ctrl
+Ctrl -> Req : valida formato
+Req --> Ctrl : datos correctos
+
+Ctrl -> UC : execute(RequestAppointmentInput)
+activate UC
+
+UC -> Ent : schedule(...)
+activate Ent
+Ent -> Ent : fecha futura,\nduracion y participantes
+Ent --> UC : cita en estado pendiente
+deactivate Ent
+
+UC -> Disp : doctorExists()
+Disp -> DB : SELECT sobre doctors
+DB --> Disp : resultado
+Disp --> UC : true
+
+UC -> Disp : doctorHandlesSpecialty()
+Disp -> DB : SELECT por especialidad
+DB --> Disp : resultado
+Disp --> UC : true / false
+
+alt El medico no atiende la especialidad
+    UC --> Ctrl : AppointmentRuleViolation
+    Ctrl --> Usuario : 422 dato invalido
+else Especialidad correcta
+
+    UC -> Disp : isWithinWorkingHours()
+    Disp -> DB : SELECT sobre doctor_availabilities
+    DB --> Disp : jornada
+    Disp --> UC : true / false
+
+    alt Fuera de jornada
+        UC --> Ctrl : AppointmentRuleViolation
+        Ctrl --> Usuario : 422 horario no disponible
+    else Dentro de jornada
+
+        UC -> Repo : transaction(...)
+        activate Repo
+
+        Repo -> DB : BEGIN
+        UC -> Repo : hasOverlap()
+        Repo -> DB : SELECT de cruces\n(excluye canceladas)
+        DB --> Repo : conteo
+
+        alt Horario ocupado
+            Repo -> DB : ROLLBACK
+            UC --> Ctrl : AppointmentRuleViolation
+            Ctrl --> Usuario : 422 horario ocupado
+        else Horario libre
+            UC -> Repo : save(appointment)
+            Repo -> DB : INSERT
+            DB --> Repo : identificador
+            Repo -> DB : COMMIT
+            Repo --> UC : appointmentId
+            deactivate Repo
+
+            UC --> Ctrl : AppointmentData
+            Ctrl --> Usuario : 201 cita registrada
+        end
+    end
+end
+
+deactivate UC
+deactivate Ctrl
+
+note over UC, Repo
+La verificacion de cruce y la escritura
+ocurren dentro de la misma transaccion.
+end note
+
+@enduml
