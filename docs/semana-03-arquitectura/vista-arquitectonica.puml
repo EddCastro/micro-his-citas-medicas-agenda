@@ -1,0 +1,52 @@
+@startuml
+title ASII-05 - Vista arquitectonica de Citas medicas y agenda
+
+left to right direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor "Usuario autorizado" as Usuario
+
+rectangle "Sistema Hospitalario Integrado (HIS)" {
+
+  component "Frontend Vue 3\nInterfaz compartida" as Frontend
+  component "API Laravel 12\n/api/v1" as API
+
+  component "ASII-05\nCitas medicas y agenda" as Citas
+
+  component "ASII-01\nUsuarios y tenants" as Usuarios
+  component "ASII-02\nRBAC - roles y permisos" as RBAC
+  component "ASII-03\nPacientes" as Pacientes
+  component "ASII-04\nMedicos, especialidades\ny disponibilidad" as Medicos
+  component "ASII-21\nAlertas y notificaciones" as Notificaciones
+  component "ASII-22\nGobernanza y auditoria" as Auditoria
+}
+
+Usuario --> Frontend : utiliza
+Frontend --> API : solicitudes HTTP
+API --> Citas : operaciones de citas
+
+Citas --> Usuarios : contexto de usuario\ny tenant
+Citas --> RBAC : valida permisos
+Citas --> Pacientes : consulta paciente
+Citas --> Medicos : consulta medico,\nespecialidad y disponibilidad
+Citas --> Notificaciones : solicita avisos\ny recordatorios
+Citas --> Auditoria : registra eventos\ny trazabilidad
+
+note bottom of Citas
+Responsabilidades principales:
+- programar citas
+- confirmar y cancelar
+- reagendar
+- consultar agenda
+- gestionar lista de espera
+- evitar cruces de horario
+end note
+
+note bottom
+La estructura definitiva de persistencia no se detalla
+en esta vista porque la base de datos compartida
+se encuentra pendiente de confirmacion.
+end note
+
+@enduml
