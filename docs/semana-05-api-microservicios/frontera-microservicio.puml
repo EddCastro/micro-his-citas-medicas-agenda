@@ -1,0 +1,51 @@
+@startuml
+title ASII-05 - Frontera candidata de microservicio
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "Monolito modular - Sistema Hospitalario Integrado" {
+
+  rectangle "Frontera candidata: servicio Agenda" as Frontera #LightYellow {
+    component "Citas medicas" as Citas
+    component "Reglas de cruce\ny transicion de estado" as Reglas
+    component "Disponibilidad medica\n(replicada)" as Disp
+  }
+
+  component "ASII-01\nUsuarios y hospital" as M01
+  component "ASII-02\nPermisos" as M02
+  component "ASII-03\nPacientes" as M03
+  component "ASII-04\nMedicos y especialidades" as M04
+}
+
+Citas --> Reglas
+Citas --> Disp
+
+Citas ..> M01 : contexto\n1 por solicitud
+Citas ..> M02 : autorizacion\n1 por solicitud
+Citas ..> M03 : existencia del paciente\n1 al solicitar
+Citas ..> M04 : especialidad del medico\n1 al solicitar
+Disp ..> M04 : jornada laboral\npendiente de reconciliar
+
+note bottom of Frontera
+Dentro de la frontera: lo que el
+modulo escribe y gobierna.
+
+Fuera: lo que solo consulta.
+end note
+
+note right of M04
+Cada dependencia se convertiria en
+una llamada de red si el modulo se
+extrajera. Una escritura pasaria de
+una transaccion local a cuatro
+llamadas coordinadas.
+end note
+
+note top of Frontera
+DECISION: no se extrae.
+Ninguno de los cinco criterios
+medibles alcanza su umbral.
+end note
+
+@enduml

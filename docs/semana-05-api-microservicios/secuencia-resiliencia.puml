@@ -1,0 +1,94 @@
+@startuml
+title ASII-05 - Solicitud de cita con tiempo de espera, reintento e idempotencia
+
+skinparam shadowing false
+
+actor "Personal administrativo" as Usuario
+participant "Interfaz web" as Front
+participant "Middleware" as Mw
+participant "AppointmentController" as Ctrl
+participant "RequestAppointment" as UC
+participant "Disponibilidad" as Disp
+participant "AppointmentRepository" as Repo
+database "PostgreSQL" as DB
+
+Usuario -> Front : registrar cita
+activate Front
+
+Front -> Front : genera Idempotency-Key
+Front -> Mw : POST /api/v1/appointments\nX-Tenant-ID, Bearer, X-Request-Id
+activate Mw
+Mw -> Mw : limite, hospital,\ntoken y permisos
+Mw -> Ctrl : peticion autorizada
+deactivate Mw
+
+activate Ctrl
+Ctrl -> Repo : buscar Idempotency-Key
+Repo -> DB : SELECT clave
+DB --> Repo : resultado
+
+alt Clave ya registrada
+    Repo --> Ctrl : cita existente
+    Ctrl --> Front : 200 cita original
+    note right : el reintento no duplica
+
+else Clave nueva
+
+    Ctrl -> UC : execute(input)
+    activate UC
+
+    UC -> Disp : jornada del medico
+    activate Disp
+
+    alt Respuesta dentro de 2 segundos
+        Disp --> UC : franja activa
+    else Tiempo de espera agotado
+        Disp --> UC : sin respuesta
+        UC -> Disp : reintento 1
+        Disp --> UC : sin respuesta
+        UC -> Disp : reintento 2
+        Disp --> UC : sin respuesta
+        UC --> Ctrl : dependencia no disponible
+        Ctrl --> Front : 422 horario no verificable
+        note right
+        Degradacion hacia el rechazo:
+        no se agenda sin validar la jornada.
+        end note
+    end
+    deactivate Disp
+
+    UC -> Repo : transaction
+    activate Repo
+    Repo -> DB : BEGIN
+    UC -> Repo : hasOverlap
+    Repo -> DB : SELECT de cruces
+    DB --> Repo : conteo
+
+    alt Horario ocupado
+        Repo -> DB : ROLLBACK
+        UC --> Ctrl : APPOINTMENT_SLOT_TAKEN
+        Ctrl --> Front : 422 con codigo y request_id
+    else Horario libre
+        UC -> Repo : save
+        Repo -> DB : INSERT cita
+        Repo -> DB : INSERT Idempotency-Key
+        Repo -> DB : COMMIT
+        Repo --> UC : appointmentId
+        deactivate Repo
+        UC --> Ctrl : AppointmentData
+        Ctrl --> Front : 201 cita registrada
+    end
+    deactivate UC
+end
+
+deactivate Ctrl
+Front --> Usuario : resultado
+deactivate Front
+
+note over Ctrl, Repo
+La clave de idempotencia se guarda en
+la misma transaccion que la cita, de
+modo que ambas existen o ninguna.
+end note
+
+@enduml

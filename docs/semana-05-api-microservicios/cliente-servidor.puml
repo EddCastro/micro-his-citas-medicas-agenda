@@ -1,0 +1,69 @@
+@startuml
+title ASII-05 - Diseno cliente-servidor
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor "Personal administrativo" as Usuario
+
+package "Cliente" {
+  component "Interfaz web\nVue 3" as Front
+}
+
+cloud "HTTPS" as Red
+
+package "Servidor" {
+  package "Puntos de control" {
+    component "Limite de solicitudes" as Rate
+    component "TenantMiddleware\nX-Tenant-ID" as MwTenant
+    component "JwtAuth\nAuthorization: Bearer" as MwJwt
+    component "Permisos\nASII-02" as MwPerm
+  }
+
+  package "Modulo ASII-05" {
+    component "AppointmentController\n/api/v1/appointments" as Ctrl
+    component "Casos de uso" as Uso
+    component "Dominio\nreglas y estados" as Dom
+    component "Contratos" as Contratos
+    component "Adaptadores" as Infra
+  }
+
+  component "Observabilidad\nregistro y metricas" as Obs
+}
+
+database "PostgreSQL\nappointments\ndoctor_availabilities" as DB
+
+Usuario --> Front
+Front --> Red : JSON\nX-Request-Id
+Red --> Rate
+Rate --> MwTenant
+MwTenant --> MwJwt
+MwJwt --> MwPerm
+MwPerm --> Ctrl
+
+Ctrl --> Uso
+Uso --> Dom
+Uso ..> Contratos
+Contratos <|.. Infra
+Infra --> DB
+
+Ctrl ..> Obs : correlacion
+Uso ..> Obs : metricas de negocio
+
+note bottom of Rate
+120 solicitudes por minuto
+por usuario autenticado.
+end note
+
+note bottom of Contratos
+Declarados en el dominio.
+Sustituibles por implementaciones
+remotas sin tocar los casos de uso.
+end note
+
+note right of Obs
+El motivo de la cita y las notas
+no se escriben en los registros.
+end note
+
+@enduml
