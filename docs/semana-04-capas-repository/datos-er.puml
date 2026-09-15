@@ -1,0 +1,100 @@
+@startuml
+title ASII-05 - Vista de datos
+
+skinparam shadowing false
+hide circle
+
+entity "tenants" as tenants {
+  * id : char(36) <<PK>>
+  --
+  name : string
+  slug : string
+}
+
+entity "patients" as patients {
+  * id : bigint <<PK>>
+  --
+  * tenant_id : char(36)
+  code, first_name, last_name
+  <i>propiedad de ASII-03</i>
+}
+
+entity "specialties" as specialties {
+  * id : bigint <<PK>>
+  --
+  * tenant_id : char(36)
+  name
+  <i>propiedad de ASII-04</i>
+}
+
+entity "doctors" as doctors {
+  * id : bigint <<PK>>
+  --
+  * tenant_id : char(36)
+  * user_id : bigint <<FK>>
+  * specialty_id : bigint <<FK>>
+  license_number
+  <i>propiedad de ASII-04</i>
+}
+
+entity "appointments" as appointments {
+  * id : bigint <<PK>>
+  --
+  * tenant_id : char(36)
+  * patient_id : bigint <<FK>>
+  * doctor_id : bigint <<FK>>
+  * specialty_id : bigint <<FK>>
+  * scheduled_at : datetime
+  * duration_min : smallint
+  * status : enum
+  reason : text
+  notes : text
+  --
+  idx_appt_doctor_date
+  idx_appt_date_status
+  idx_appt_patient_date
+  <i>tabla del scaffold comun</i>
+}
+
+entity "doctor_availabilities" as availability {
+  * id : bigint <<PK>>
+  --
+  * tenant_id : char(36)
+  * doctor_id : bigint <<FK>>
+  * weekday : tinyint
+  * start_time : time
+  * end_time : time
+  * active : boolean
+  --
+  CHECK weekday BETWEEN 0 AND 6
+  CHECK start_time < end_time
+  UNIQUE (tenant, doctor, weekday, start_time)
+  <i>creada por ASII-05</i>
+}
+
+tenants ||--o{ patients
+tenants ||--o{ specialties
+tenants ||--o{ doctors
+tenants ||--o{ appointments
+tenants ||--o{ availability
+
+specialties ||--o{ doctors
+patients ||--o{ appointments
+doctors ||--o{ appointments
+specialties ||--o{ appointments
+doctors ||--o{ availability
+
+note bottom of appointments
+Estados: pendiente, confirmada,
+completada, cancelada, no_asistio.
+Solo pendiente y confirmada bloquean
+el horario del medico.
+end note
+
+note bottom of availability
+Tabla propia del modulo mientras
+ASII-04 no publique su fuente de
+disponibilidad en el backend.
+end note
+
+@enduml

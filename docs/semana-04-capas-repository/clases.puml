@@ -1,0 +1,137 @@
+@startuml
+title ASII-05 - Diagrama de clases
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+package "Presentation" {
+  class AppointmentController {
+    + index(AgendaRequest) : JsonResponse
+    + store(StoreAppointmentRequest) : JsonResponse
+    + confirm(int) : JsonResponse
+    + cancel(CancelAppointmentRequest, int) : JsonResponse
+    + reschedule(RescheduleAppointmentRequest, int) : JsonResponse
+  }
+}
+
+package "Application" {
+  class RequestAppointment {
+    + execute(RequestAppointmentInput) : AppointmentData
+  }
+  class ConfirmAppointment {
+    + execute(int) : AppointmentData
+  }
+  class CancelAppointment {
+    + execute(int, string) : AppointmentData
+  }
+  class RescheduleAppointment {
+    + execute(int, string) : AppointmentData
+  }
+  class GetAgenda {
+    + execute(...) : AppointmentData[]
+  }
+}
+
+package "Domain" {
+  class Appointment {
+    - id : ?int
+    - tenantId : string
+    - patientId : int
+    - doctorId : int
+    - specialtyId : int
+    - scheduledAt : DateTimeImmutable
+    - durationMin : int
+    - status : AppointmentStatus
+    --
+    - __construct(...)
+    + {static} schedule(...) : Appointment
+    + {static} restore(...) : Appointment
+    + confirm() : void
+    + cancel(string) : void
+    + reschedule(DateTimeImmutable) : void
+    + endsAt() : DateTimeImmutable
+  }
+
+  enum AppointmentStatus {
+    Pendiente
+    Confirmada
+    Completada
+    Cancelada
+    NoAsistio
+    --
+    + bloqueaHorario() : bool
+    + puedeConfirmarse() : bool
+    + puedeCancelarse() : bool
+  }
+
+  interface AppointmentRepository {
+    + save(Appointment) : int
+    + findById(string, int) : ?Appointment
+    + update(Appointment) : void
+    + hasOverlap(...) : bool
+    + search(AgendaFilter) : array
+    + transaction(callable) : mixed
+  }
+
+  interface DoctorAvailabilityRepository {
+    + doctorExists(string, int) : bool
+    + doctorHandlesSpecialty(...) : bool
+    + isWithinWorkingHours(...) : bool
+  }
+
+  interface TenantContext {
+    + tenantId() : string
+  }
+}
+
+package "Infrastructure" {
+  class EloquentAppointmentRepository
+  class EloquentDoctorAvailabilityRepository
+  class RequestTenantContext
+}
+
+package "Tests" {
+  class FakeAppointmentRepository
+  class FakeDoctorAvailabilityRepository
+  class FakeTenantContext
+}
+
+AppointmentController --> RequestAppointment
+AppointmentController --> ConfirmAppointment
+AppointmentController --> CancelAppointment
+AppointmentController --> RescheduleAppointment
+AppointmentController --> GetAgenda
+
+RequestAppointment ..> AppointmentRepository
+RequestAppointment ..> DoctorAvailabilityRepository
+RequestAppointment ..> TenantContext
+RequestAppointment ..> Appointment
+ConfirmAppointment ..> AppointmentRepository
+CancelAppointment ..> AppointmentRepository
+RescheduleAppointment ..> AppointmentRepository
+RescheduleAppointment ..> DoctorAvailabilityRepository
+GetAgenda ..> AppointmentRepository
+
+Appointment --> AppointmentStatus
+
+AppointmentRepository <|.. EloquentAppointmentRepository
+AppointmentRepository <|.. FakeAppointmentRepository
+DoctorAvailabilityRepository <|.. EloquentDoctorAvailabilityRepository
+DoctorAvailabilityRepository <|.. FakeDoctorAvailabilityRepository
+TenantContext <|.. RequestTenantContext
+TenantContext <|.. FakeTenantContext
+
+note bottom of Appointment
+Constructor privado.
+schedule() exige fecha futura.
+restore() reconstruye una cita
+persistida sin revalidar la fecha.
+end note
+
+note bottom of Infrastructure
+Depende de Domain, nunca al reves.
+Los enlaces se registran en
+AppServiceProvider.
+end note
+
+@enduml
