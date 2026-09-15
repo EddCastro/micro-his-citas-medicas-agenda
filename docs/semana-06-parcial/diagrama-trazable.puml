@@ -1,0 +1,82 @@
+@startuml
+title ASII-05 - Diagrama trazable: del actor a la evidencia
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+left to right direction
+
+package "Semana 1 - Actores y UML" as S1 #F2F7FB {
+  component "Personal administrativo\nPaciente / Medico" as Actores
+  component "CU-01 Solicitar\nCU-02 Confirmar\nCU-03 Cancelar\nCU-04 Reagendar\nCU-05 Consultar" as CU
+}
+
+package "Semana 2 - Requisitos y SOLID" as S2 #F7F2FB {
+  component "RF-01 a RF-16\nRNF-01 a RNF-12" as RF
+  component "CA-01 a CA-15\ncriterios de aceptacion" as CA
+  component "DIP\ninversion de dependencias" as DIP
+}
+
+package "Semanas 3 y 4 - Arquitectura" as S34 #F2FBF4 {
+  component "Presentation\nApplication\nDomain\nPersistence" as Capas
+  component "AppointmentRepository\nDoctorAvailabilityRepository\nTenantContext" as Contratos
+  component "Appointment\nAppointmentStatus\nreglas RN-01 a RN-14" as Dominio
+}
+
+package "Semana 5 - Contrato API" as S5 #FBF7F2 {
+  component "POST /appointments\nPATCH /{id}/confirm\nPATCH /{id}/cancel\nPATCH /{id}/reschedule\nGET /appointments" as API
+  component "Frontera de microservicio\n5 criterios medibles" as Frontera
+}
+
+package "Semana 6 - Cambio practico" as S6 #FBF2F2 {
+  component "Bloqueo pesimista\nsobre agenda del medico" as Lock
+  component "Indice unico parcial\nen base de datos" as Indice
+}
+
+package "Evidencia ejecutable" as EV #F5F5F5 {
+  component "22 pruebas de dominio" as T1
+  component "19 pruebas de aplicacion" as T2
+  component "12 pruebas de integracion" as T3
+  component "6 pruebas de concurrencia" as T4
+}
+
+Actores --> CU
+CU --> RF : origina
+RF --> CA : se verifica con
+RF --> DIP : exige desacoplar
+
+DIP --> Contratos : materializa
+Contratos --> Capas : define la frontera
+CU --> Dominio : regla de negocio
+Dominio --> Capas
+
+Capas --> API : expone
+Contratos --> Frontera : permite evaluar
+
+Dominio --> T1
+Contratos --> T2
+Capas --> T3
+
+RF --> Lock : RNF-03 atomicidad
+Lock --> Indice : refuerza
+Lock --> T4
+Indice --> T4
+
+note bottom of DIP
+Los contratos se declaran en Domain.
+Infrastructure depende de ellos,
+nunca al reves.
+end note
+
+note bottom of Lock
+Cierra la limitacion declarada
+desde la semana 3: la comprobacion
+previa no descartaba la condicion
+de carrera.
+end note
+
+note bottom of EV
+148 pruebas aprobadas.
+Codigo de salida 0.
+end note
+
+@enduml
