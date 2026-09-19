@@ -21,7 +21,12 @@ main ─────────────────────────
         ├── feature/week-03-arquitectura ──── PR #3
         ├── feature/week-04-capas-repository  PR #4
         ├── feature/week-05-api-microservicios PR #5
-        └── feature/week-06-parcial ───────── PR #6
+        ├── feature/week-06-parcial ───────── PR #6
+        ├── feature/week-07-componentes ───── PR #7
+        ├── feature/week-08-ux ────────────── PR #8
+        ├── feature/week-09-usabilidad ────── PR #9
+        ├── feature/week-10-movil ─────────── PR #10
+        └── feature/week-11-prototipo ─────── PR #11
 ```
 
 Cada semana se desarrolla en su propia rama `feature/week-NN-tema`, con commits
@@ -37,6 +42,11 @@ separados por artefacto, y se integra a `developer` mediante pull request.
 | 4 | Arquitectura en capas y patrón Repository | [`docs/semana-04-capas-repository`](docs/semana-04-capas-repository) | #4 |
 | 5 | Cliente-servidor, API REST, microservicios e integración | [`docs/semana-05-api-microservicios`](docs/semana-05-api-microservicios) | #5 |
 | 6 | Primera evaluación parcial | [`docs/semana-06-parcial`](docs/semana-06-parcial) | #6 |
+| 7 | Diseño de componentes y refactorización | [`docs/semana-07-componentes`](docs/semana-07-componentes) | #7 |
+| 8 | Diseño de experiencia de usuario | [`docs/semana-08-ux`](docs/semana-08-ux) | #8 |
+| 9 | Evaluación del diseño, usabilidad y accesibilidad | [`docs/semana-09-usabilidad`](docs/semana-09-usabilidad) | #9 |
+| 10 | Diseño para movilidad | [`docs/semana-10-movil`](docs/semana-10-movil) | #10 |
+| 11 | Mejores prácticas para diseño móvil/web | [`docs/semana-11-prototipo`](docs/semana-11-prototipo) · [`prototipo/`](prototipo) | #11 |
 
 Todas las carpetas están disponibles en la rama `developer`.
 
@@ -87,6 +97,44 @@ El **cambio práctico defendido** cierra la condición de carrera declarada como
 limitación desde la semana 3: bloqueo pesimista sobre la agenda del médico más
 un índice único parcial en la base de datos, con seis pruebas de integración
 que lo evidencian.
+
+### Semana 7 — Componentes y refactorización
+
+Componentes backend y frontend del flujo con sus contratos de entrada y
+salida. Refactor conceptual del punto de mayor acoplamiento,
+`AvailabilityRepository::isAvailable()`, que mezclaba jornada del médico,
+regla de cruce en SQL, estados que ocupan agenda y concurrencia implícita:
+queda dividido en `SlotPolicy` + `TimeSlot` en el dominio y en puertos de
+lectura y de atomicidad explícitos.
+
+### Semana 8 — Experiencia de usuario
+
+User flow por rol (Recepcionista, Enfermera, Médico), seis wireframes
+anotados y el catálogo de estados, mensajes, validaciones y reglas de
+interacción, incluida la protección de datos del paciente.
+
+### Semana 9 — Usabilidad y accesibilidad
+
+Evaluación de los wireframes con las heurísticas de Nielsen y WCAG 2.2 AA.
+Once hallazgos con evidencia medida (contraste y teclado) y un backlog
+priorizado por severidad, frecuencia y peso en el módulo, con un criterio
+verificable por corrección.
+
+### Semana 10 — Movilidad
+
+Cinco pantallas a 320, 375 y 430 px, reglas de breakpoint en 600 y 1024 px, y
+dos escenarios móviles: conflicto de concurrencia en ventanilla y conexión
+limitada en Enfermería.
+
+### Semana 11 — Prototipo navegable
+
+Prototipo HTML en [`prototipo/index.html`](prototipo/index.html), desktop y
+móvil, con camino feliz y error crítico de concurrencia (409), mapa de
+navegación y capturas. Una verificación automatizada con Playwright y
+axe-core confirma 35 de 35 criterios, entre ellos el cierre de los once
+hallazgos de la semana 9.
+
+En línea: https://eddcastro.github.io/micro-his-citas-medicas-agenda/prototipo/
 
 ## Micro-HIS en PHP vanilla
 
