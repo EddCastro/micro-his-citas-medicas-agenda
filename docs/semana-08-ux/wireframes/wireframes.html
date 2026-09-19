@@ -179,15 +179,15 @@
         <div class="kv"><b>Paciente</b><span>Ana Lucía Pérez · Exp. 10-4471</span><b>Médico</b><span>Dr. Ruiz · Medicina interna</span><b>Fecha y hora</b><span>05/10/2026 10:30 – 11:00</span></div>
         <span class="mini">Editar paciente · Editar horario</span>
       </div>
-      <div class="field rel" style="margin-top:14px" id="w4-reason"><i class="mk">2</i><label>Motivo de la consulta <span class="req">*</span></label>
-        <div class="input err" style="width:520px;height:60px"></div><div class="errtxt">Campo requerido</div></div>
+      <div class="field rel" style="margin-top:14px" id="w4-reason"><i class="mk">2</i><label>Motivo de la consulta</label>
+        <div class="input" style="width:520px;height:60px">Control de presión arterial</div><div class="help">Opcional · 27/500</div></div>
       <div class="row"><span class="btn ghost">‹ Atrás</span><span class="btn primary rel" id="w4-submit"><i class="mk">3</i>Agendar cita</span></div>
       <p class="mini" style="margin-top:14px">La cita se crea en estado <b>pendiente</b> hasta que Enfermería confirme la asistencia.</p>
     </div>
   </div>
   <div class="notes"><h3>Anotaciones</h3><ol>
     <li><b class="n">1</b><span><b>Resumen.</b> Todo lo que se va a guardar, con enlaces para corregir sin reiniciar el flujo.</span></li>
-    <li><b class="n">2</b><span><b>Validación en línea.</b> Motivo obligatorio (5–250 caracteres). El error aparece al salir del campo o al enviar.</span></li>
+    <li><b class="n">2</b><span><b>Motivo de la consulta.</b> Opcional, hasta 500 caracteres (regla de <code>StoreAppointmentRequest</code>). Contador visible.</span></li>
     <li><b class="n">3</b><span><b>Envío.</b> Al pulsar: "Agendando…", botón deshabilitado para impedir doble clic. Se reutiliza la <code>Idempotency-Key</code> si se reintenta.</span></li>
     <li><b class="n">4</b><span><b>Error 409 <code>APPOINTMENT_SLOT_TAKEN</code>.</b> Aviso en la esquina superior; se recarga la grilla (W3) conservando paciente, médico y motivo.</span></li>
     <li><b class="n">·</b><span><b>Otros errores recuperables.</b> 422 fuera de jornada → volver a W3. Sin conexión → "No pudimos confirmar el registro. Reintentar" (no duplica). 401 → borrador en memoria e inicio de sesión.</span></li>
@@ -232,14 +232,14 @@
     <div class="modal-bg"><div class="modal rel" id="w6-modal"><i class="mk">2</i>
       <h2 style="margin-top:0">¿Cancelar la cita?</h2>
       <p>Ana Lucía Pérez · 05/10/2026 10:30 · Dr. Ruiz</p>
-      <div class="field rel" id="w6-reason"><i class="mk">3</i><label>Motivo <span class="req">*</span></label><div class="input" style="height:54px"></div><div class="help">Mínimo 5 caracteres.</div></div>
+      <div class="field rel" id="w6-reason"><i class="mk">3</i><label>Motivo <span class="req">*</span></label><div class="input err" style="height:54px"></div><div class="errtxt">Campo requerido</div></div>
       <div class="row rel" style="justify-content:flex-end" id="w6-buttons"><i class="mk">4</i><span class="btn">Cancelar</span><span class="btn primary">Aceptar</span></div>
     </div></div>
   </div>
   <div class="notes"><h3>Anotaciones</h3><ol>
     <li><b class="n">1</b><span><b>Acciones por rol.</b> Enfermera: solo "Confirmar asistencia" (elige medio de contacto). Recepcionista: confirmar y cancelar. Médico: sin acciones.</span></li>
     <li><b class="n">2</b><span><b>Confirmación de acción destructiva.</b> Diálogo modal con los datos de la cita que se cancela.</span></li>
-    <li><b class="n">3</b><span><b>Validación.</b> Motivo obligatorio (<code>APPOINTMENT_CANCEL_REASON_REQUIRED</code>).</span></li>
+    <li><b class="n">3</b><span><b>Validación.</b> Motivo obligatorio, de 3 a 500 caracteres (<code>CancelAppointmentRequest</code>). Se muestra al enviar vacío.</span></li>
     <li><b class="n">4</b><span><b>Botones del diálogo.</b> "Cancelar" cierra el diálogo; "Aceptar" cancela la cita.</span></li>
     <li><b class="n">·</b><span><b>Error 422 transición inválida.</b> "Esta cita ya fue cancelada o confirmada por otra persona." Se recarga el detalle.</span></li>
     <li><b class="n">·</b><span><b>Protección de datos.</b> El motivo solo se ve en el detalle, para roles con <code>appointments.view</code>.</span></li>

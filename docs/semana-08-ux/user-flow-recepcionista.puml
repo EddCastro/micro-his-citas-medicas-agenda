@@ -24,10 +24,7 @@ repeat
   backward :Estado vacio: "Sin horarios el <fecha>"\nAccion: "Ver siguiente fecha con horarios";
 repeat while (Hay horarios libres?) is (no) not (si)
 :Selecciona un horario;
-repeat
-  :Paso 4 - Revisar resumen y motivo (W4);
-  backward :Error en linea bajo el campo;
-repeat while (Motivo valido?) is (no) not (si)
+:Paso 4 - Revisar resumen\ny motivo opcional (max. 500) (W4);
 :Pulsa "Agendar cita";
 :Enviando... boton deshabilitado\n(misma Idempotency-Key si reintenta);
 switch (Respuesta del servidor)

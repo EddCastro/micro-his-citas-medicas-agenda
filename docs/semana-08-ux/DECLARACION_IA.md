@@ -57,9 +57,11 @@ corresponden al estudiante.
 | Una sintaxis `backward` dentro de un `if` hacía fallar el user flow de Recepción en PlantUML. | Se reescribió con bloques `repeat`; `-checkonly` termina con código 0. |
 | Los marcadores numerados tapaban la primera letra de las etiquetas en los wireframes. | Se desplazaron fuera del elemento y se regeneraron las capturas. |
 
+| La primera versión exigía el motivo de la consulta (5–250 caracteres) y pedía 5–250 para el motivo de cancelación, reglas que el backend no tiene. | Se alinearon con los `FormRequest`: motivo de consulta opcional (máx. 500) y motivo de cancelación de 3 a 500 caracteres. |
+
 ## Validación humana
 
-El estudiante verificó que cada acción mostrada corresponda a un endpoint existente, que los roles coincidan con la matriz de permisos, que los mensajes usen los códigos del contrato de API y que los diagramas se validen con `-checkonly` (código de salida `0`). Revisó visualmente cada wireframe.
+El estudiante verificó que cada acción mostrada corresponda a un endpoint existente, que los roles coincidan con la matriz de permisos, que los mensajes usen los códigos del contrato de API, que las validaciones coincidan con `StoreAppointmentRequest` y `CancelAppointmentRequest` y que los diagramas se validen con `-checkonly` (código de salida `0`). Revisó visualmente cada wireframe.
 
 ## Responsabilidad académica
 

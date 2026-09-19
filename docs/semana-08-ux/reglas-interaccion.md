@@ -49,14 +49,28 @@ permiso; ocultar un botón no es un control de seguridad.
 | Fecha pasada | `APPOINTMENT_PAST_DATE` | Elija una fecha a partir de hoy. | El calendario ya lo impide |
 | Fuera de jornada | `DOCTOR_OUTSIDE_WORKING_HOURS` | El médico no atiende en ese horario. | Volver a W3 |
 | Horario tomado | `APPOINTMENT_SLOT_TAKEN` | Otro usuario tomó ese horario. Elija otro. | Grilla recargada |
-| Motivo vacío | — | Campo requerido | Foco en el campo |
-| Motivo de cancelación | `APPOINTMENT_CANCEL_REASON_REQUIRED` | Escriba el motivo de la cancelación (mínimo 5 caracteres). | — |
+| Motivo de cancelación vacío | `APPOINTMENT_CANCEL_REASON_REQUIRED` | Campo requerido | Foco en el campo |
 | Transición inválida | `APPOINTMENT_INVALID_TRANSITION` | Esta cita ya fue cancelada o confirmada por otra persona. | Detalle recargado |
 | Sin conexión | — | No pudimos confirmar el registro. Revise la conexión y reintente. | Reintentar (misma clave) |
 | Sesión expirada | 401 | Su sesión expiró. | Iniciar sesión |
 | Sin permiso | 403 | No tiene permiso para esta acción. | Volver a la agenda |
 
 Los mensajes se eligen por `code`, no por el texto que devuelve el servidor.
+Hoy el backend responde 422 con solo `message`; los códigos son los del
+contrato de la semana 5 y el `ErrorMapper` propuesto en la semana 7.
+
+## 4.1 Validaciones de formato
+
+Tomadas de los `FormRequest` del backend, para que la interfaz no pida más ni
+menos que el servidor.
+
+| Campo | Regla | Origen |
+|---|---|---|
+| Paciente, médico, especialidad | Obligatorios | `StoreAppointmentRequest` |
+| Fecha y hora | Obligatoria, futura | `StoreAppointmentRequest`, RN-01 |
+| Duración | 5 a 480 minutos (la interfaz ofrece 15, 30, 45 y 60) | `StoreAppointmentRequest` |
+| Motivo de la consulta | Opcional, máximo 500 caracteres | `StoreAppointmentRequest` |
+| Motivo de cancelación | Obligatorio, 3 a 500 caracteres | `CancelAppointmentRequest`, RN-12 |
 
 ## 5. Reglas de interacción
 
@@ -81,7 +95,7 @@ Los mensajes se eligen por `code`, no por el texto que devuelve el servidor.
 | W2, médico | "Filtrado por especialidad" |
 | W3, ícono ⓘ | "¿Por qué no veo un horario? Está fuera de la jornada del médico u ocupado por otra cita." |
 | W4, pie | "La cita se crea en estado pendiente hasta que Enfermería confirme la asistencia." |
-| W6, motivo | "Mínimo 5 caracteres." |
+| W4, motivo de consulta | "Opcional" + contador de caracteres (máximo 500) |
 
 ## 7. Protección de datos
 

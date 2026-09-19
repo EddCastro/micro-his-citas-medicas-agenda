@@ -11,7 +11,7 @@ start
 :Abre la cita desde la agenda (W1 -> W6);
 :Pulsa "Cancelar cita";
 :Dialogo de cancelacion (W6)\nmotivo obligatorio;
-if (Motivo con 5 a 250 caracteres?) then (si)
+if (Motivo con 3 a 500 caracteres?) then (si)
   :Confirma "Si, cancelar cita";
   if (Respuesta 200?) then (si)
     :Estado CANCELADA\nEl horario vuelve a quedar libre;

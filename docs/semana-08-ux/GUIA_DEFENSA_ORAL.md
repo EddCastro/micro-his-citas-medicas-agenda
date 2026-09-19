@@ -23,7 +23,9 @@ Si un rol viera acciones que no puede ejecutar, el backend las rechazaría con
 
 Cada paso corresponde a una validación del backend: paciente (ASII-03),
 médico y especialidad (`DOCTOR_SPECIALTY_MISMATCH`), horario
-(`DOCTOR_OUTSIDE_WORKING_HOURS`, `APPOINTMENT_SLOT_TAKEN`) y motivo. Separarlos
+(`DOCTOR_OUTSIDE_WORKING_HOURS`, `APPOINTMENT_SLOT_TAKEN`) y revisión final.
+El motivo de la consulta es opcional porque así lo define
+`StoreAppointmentRequest`; la interfaz no exige más que el servidor. Separarlos
 permite prevenir el error en el paso donde ocurre en lugar de mostrarlo todo al
 final.
 
