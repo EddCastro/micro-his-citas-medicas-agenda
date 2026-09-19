@@ -7,49 +7,56 @@ skinparam defaultFontName DejaVu Sans
 skinparam packageStyle rectangle
 left to right direction
 
-package "Frontend Vue 3 (UI)" as FE {
-  component "AppointmentRequestView\n(pagina del flujo)" as View
-  component "PatientPicker" as FPat
-  component "DoctorSpecialtyFilter" as FDoc
-  component "AvailabilitySlotGrid" as FGrid
-  component "AppointmentSummaryDialog\n(confirmar solicitud)" as FSum
-  component "AppointmentCard\n+ StatusBadge" as FCard
-  component "CancelAppointmentDialog\n(motivo obligatorio)" as FCan
-  component "useAppointmentsApi\n(cliente HTTP, Idempotency-Key)" as FApi
+skinparam component {
+  BackgroundColor<<propuesto>> #FFF8E1
+  BorderColor<<propuesto>> #B8860B
+  BorderStyle<<propuesto>> dashed
+}
+
+package "Frontend Vue 3 (sobre la base de ASII-26)" as FE {
+  component "AppointmentRequestView" <<propuesto>> as View
+  component "PatientPicker" <<propuesto>> as FPat
+  component "DoctorSpecialtyFilter" <<propuesto>> as FDoc
+  component "AvailabilitySlotGrid" <<propuesto>> as FGrid
+  component "AppointmentSummaryDialog" <<propuesto>> as FSum
+  component "AppointmentCard\n+ StatusBadge" <<propuesto>> as FCard
+  component "CancelAppointmentDialog" <<propuesto>> as FCan
+  component "useAppointmentsApi" <<propuesto>> as FApi
 }
 
 package "Backend Laravel - ASII-05" as BE {
   package "Presentation" {
-    component "AppointmentController\nAvailabilityController" as Ctrl
-    component "FormRequests\n(validacion de formato)" as FR
-    component "ErrorMapper\n(excepcion -> code HTTP)" as EM
+    component "AppointmentController" as Ctrl
+    component "StoreAppointmentRequest\nCancelAppointmentRequest\nAgendaRequest" as FR
+    component "ErrorMapper" <<propuesto>> as EM
   }
   package "Application" {
-    component "QueryAvailability" as UQ
     component "RequestAppointment" as UR
     component "ConfirmAppointment" as UC
     component "CancelAppointment" as UX
+    component "GetAgenda" as UG
+    component "RequestAppointmentInput\nAppointmentData (DTO)" as DTO
   }
   package "Domain" {
     component "Appointment\nAppointmentStatus" as DApp
-    component "TimeSlot\n(value object)" as DSlot
-    component "SlotPolicy\n(jornada + cruce)" as DPol
+    component "AppointmentRuleViolation\nAppointmentNotFound" as DExc
+    component "TimeSlot" <<propuesto>> as DSlot
     interface "AppointmentRepository" as PApp
-    interface "AgendaReader" as PAgenda
-    interface "DoctorScheduleProvider" as PSched
-    interface "TransactionRunner\n+ AgendaLock" as PTx
+    interface "DoctorAvailabilityRepository" as PAv
+    interface "TenantContext" as PTen
+    interface "AgendaLock" <<propuesto>> as PLock
   }
-  package "Persistence" {
+  package "Infrastructure" {
     component "EloquentAppointmentRepository" as AApp
-    component "EloquentAgendaReader" as AAgenda
-    component "LocalScheduleProvider\n(tabla doctor_availabilities)" as ASched
-    component "DbTransactionRunner\n(lockForUpdate medico+dia)" as ATx
+    component "EloquentDoctorAvailabilityRepository" as AAv
+    component "RequestTenantContext" as ATen
+    component "DbAgendaLock" <<propuesto>> as ALock
   }
 }
 
-database "PostgreSQL\nappointments\ndoctor_availabilities\nuq_appt_doctor_slot_active" as DB
+database "appointments\ndoctor_availabilities\nuq_appt_doctor_slot_active" as DB
+component "ASII-01 Tenant\nASII-02 RBAC" as M02
 component "ASII-04\nMedicos y disponibilidad" as M04
-component "ASII-02 RBAC\nASII-01 Tenant" as M02
 
 View --> FPat
 View --> FDoc
@@ -63,47 +70,45 @@ FCan --> FApi
 FApi --> Ctrl : HTTPS /api/v1\nJWT + X-Tenant-ID
 
 Ctrl --> FR
-Ctrl --> UQ
 Ctrl --> UR
 Ctrl --> UC
 Ctrl --> UX
+Ctrl --> UG
 Ctrl --> EM
+Ctrl --> DTO
 
-UQ --> DPol
-UR --> DPol
 UR --> DApp
 UC --> DApp
 UX --> DApp
-DPol --> DSlot
+DApp --> DExc
+DApp --> DSlot
 
-UQ ..> PSched
-UQ ..> PAgenda
-UR ..> PSched
-UR ..> PAgenda
 UR ..> PApp
-UR ..> PTx
+UR ..> PAv
+UR ..> PTen
+UR ..> PLock
 UC ..> PApp
-UC ..> PTx
+UC ..> PLock
 UX ..> PApp
-UX ..> PTx
+UX ..> PLock
+UG ..> PApp
 
 AApp ..|> PApp
-AAgenda ..|> PAgenda
-ASched ..|> PSched
-ATx ..|> PTx
+AAv ..|> PAv
+ATen ..|> PTen
+ALock ..|> PLock
 
 AApp --> DB
-AAgenda --> DB
-ASched --> DB
-ATx --> DB
-ASched ..> M04 : sustituible cuando\nASII-04 publique su API
-Ctrl ..> M02 : middleware jwt.auth,\ntenant, permisos
+AAv --> DB
+ALock --> DB
+AAv ..> M04 : sustituible cuando\nASII-04 publique su API
+Ctrl ..> M02 : middleware tenant,\njwt.auth
 
-note bottom of DPol
-Una sola regla de disponibilidad
-para consultar (UQ) y para escribir (UR):
-lo que la UI muestra libre es lo mismo
-que el backend acepta.
-end note
+legend right
+  Recuadro normal: existe en la rama
+  feature/asii-05-semana-06-parcial-eddcastro
+  Recuadro punteado <<propuesto>>: diseno de
+  esta semana, todavia no implementado
+endlegend
 
 @enduml

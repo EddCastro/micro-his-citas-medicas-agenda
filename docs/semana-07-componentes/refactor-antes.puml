@@ -1,5 +1,5 @@
 @startuml
-title ANTES - Punto de mayor acoplamiento: validacion de disponibilidad
+title ANTES - Punto de mayor acoplamiento: hasOverlap() y la atomicidad implicita
 
 skinparam shadowing false
 skinparam defaultFontName DejaVu Sans
@@ -7,47 +7,67 @@ skinparam classAttributeIconSize 0
 hide empty members
 
 class RequestAppointment <<Application>> {
-  +execute(patientId, doctorId, scheduledAt, duration): int
+  +execute(RequestAppointmentInput): AppointmentData
+  --
+  transaction( hasOverlap -> save )
 }
 
-interface AvailabilityRepository <<Domain>> {
-  +isAvailable(doctorId, scheduledAt, duration): bool
+class ConfirmAppointment <<Application>> {
+  findById -> confirm() -> update
+  (sin transaccion)
 }
 
-class PdoAvailabilityRepository <<Persistence>> {
-  +isAvailable(...): bool
+class CancelAppointment <<Application>> {
+  findById -> cancel(motivo) -> update
+  (sin transaccion)
+}
+
+interface AppointmentRepository <<Domain>> {
+  +hasOverlap(tenant, doctor, inicio, dur, exceptoId): bool
+  +transaction(callable): mixed
+  +findById(tenant, id): ?Appointment
+  +update(Appointment): void
+}
+
+class EloquentAppointmentRepository <<Infrastructure>> {
+  +hasOverlap(...): bool
   -- mezcla --
-  1. consulta jornada (doctor_availability)
-  2. regla de cruce escrita en SQL
-  3. excluye canceladas (regla de estado)
-  4. bloqueo solo si DB::transactionLevel() > 0
+  1. regla de cruce en SQL (3 dialectos)
+  2. if DB::transactionLevel() > 0
+     lockDoctorAgenda()  (efecto oculto)
+  3. excepcion SQLite para el bloqueo
 }
 
-class AppointmentRepository <<Domain>> {
-  +save(Appointment): int
+class FakeAppointmentRepository <<tests>> {
+  +hasOverlap(...): bool
+  regla de cruce reescrita en PHP
 }
 
-class "UI (formulario)" as UI <<Frontend>> {
-  calcula horarios libres por su cuenta
-  muestra un solo mensaje de error
+class AppointmentController <<Presentation>> {
+  AppointmentRuleViolation -> 422 {message}
+  violacion del indice unico -> sin capturar (500)
 }
 
-RequestAppointment ..> AvailabilityRepository : 1) pregunta
-RequestAppointment ..> AppointmentRepository : 2) escribe
-PdoAvailabilityRepository ..|> AvailabilityRepository
-UI ..> RequestAppointment : POST /appointments
+RequestAppointment ..> AppointmentRepository
+ConfirmAppointment ..> AppointmentRepository
+CancelAppointment ..> AppointmentRepository
+EloquentAppointmentRepository ..|> AppointmentRepository
+FakeAppointmentRepository ..|> AppointmentRepository
+AppointmentController --> RequestAppointment
+AppointmentController --> ConfirmAppointment
+AppointmentController --> CancelAppointment
 
-note right of AvailabilityRepository
-Devuelve bool: "fuera de jornada" y
-"horario ocupado" llegan al usuario
-como el mismo error.
+note bottom of EloquentAppointmentRepository
+Un metodo de consulta decide si bloquea
+segun un estado global de la conexion:
+si alguien lo llama fuera de transaction(),
+la proteccion de la semana 6 desaparece
+sin error visible.
 end note
 
-note bottom of RequestAppointment
-Pregunta y escritura son dos llamadas
-separadas: la atomicidad depende de que
-alguien, fuera del caso de uso, haya
-abierto una transaccion.
+note bottom of ConfirmAppointment
+Confirmar y cancelar leen y escriben sin
+bloqueo: si Enfermeria confirma mientras
+Recepcion cancela, gana la ultima escritura.
 end note
-
 @enduml

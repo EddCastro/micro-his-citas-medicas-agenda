@@ -1,5 +1,5 @@
 @startuml
-title DESPUES - Regla en el dominio, datos y concurrencia tras contratos separados
+title DESPUES - Consulta pura, bloqueo explicito y errores tipados
 
 skinparam shadowing false
 skinparam defaultFontName DejaVu Sans
@@ -8,71 +8,73 @@ hide empty members
 
 package Application {
   class RequestAppointment {
-    +execute(RequestAppointmentInput): AppointmentOutput
+    transaction(
+      lockDoctorDay -> hasOverlap -> save )
   }
-  class QueryAvailability {
-    +execute(doctorId, date, duration): TimeSlot[]
+  class ConfirmAppointment {
+    transaction(
+      findByIdForUpdate -> confirm -> update )
+  }
+  class CancelAppointment {
+    transaction(
+      findByIdForUpdate -> cancel -> update )
   }
 }
 
 package Domain {
-  class TimeSlot <<value object>> {
-    +start: DateTimeImmutable
-    +end: DateTimeImmutable
+  class TimeSlot <<value object, propuesto>> {
+    +inicio, +fin
     +overlaps(TimeSlot): bool
-    +within(TimeSlot): bool
   }
-  class SlotPolicy <<domain service>> {
-    +assertBookable(shifts, busy, requested): void
-    +freeSlots(shifts, busy, duration): TimeSlot[]
+  class Appointment {
+    +slot(): TimeSlot
   }
-  class OutsideWorkingHours <<exception>>
-  class SlotTaken <<exception>>
-  interface DoctorScheduleProvider {
-    +shiftsOf(doctorId, date): TimeSlot[]
-  }
-  interface AgendaReader {
-    +busySlotsOf(doctorId, date): TimeSlot[]
-  }
-  interface TransactionRunner {
-    +run(callable): mixed
-  }
-  interface AgendaLock {
-    +lockDoctorDay(doctorId, date): void
+  class AppointmentRuleViolation {
+    +code(): string
   }
   interface AppointmentRepository {
-    +save(Appointment): int
+    +hasOverlap(...): bool  (solo consulta)
+    +findByIdForUpdate(tenant, id): ?Appointment
+    +transaction(callable): mixed
+  }
+  interface AgendaLock <<propuesto>> {
+    +lockDoctorDay(tenant, doctor, fecha): void
   }
 }
 
-package Persistence {
-  class LocalScheduleProvider
-  class EloquentAgendaReader
-  class DbTransactionRunner
+package Infrastructure {
+  class EloquentAppointmentRepository {
+    hasOverlap: SQL sin efectos
+    save: indice unico -> SlotTaken
+  }
+  class DbAgendaLock <<propuesto>> {
+    lockForUpdate medico + dia
+    (no-op en SQLite)
+  }
 }
 
-RequestAppointment --> SlotPolicy
-QueryAvailability --> SlotPolicy
-SlotPolicy --> TimeSlot
-SlotPolicy ..> OutsideWorkingHours : lanza
-SlotPolicy ..> SlotTaken : lanza
-RequestAppointment ..> TransactionRunner
+package Presentation {
+  class ErrorMapper <<propuesto>> {
+    code() -> 409 / 422 / 404
+  }
+}
+
+package tests {
+  class AppointmentRepositoryContractTest <<propuesto>> {
+    mismos casos de cruce para
+    Eloquent y Fake, comparados
+    con TimeSlot::overlaps()
+  }
+}
+
 RequestAppointment ..> AgendaLock
-RequestAppointment ..> DoctorScheduleProvider
-RequestAppointment ..> AgendaReader
 RequestAppointment ..> AppointmentRepository
-QueryAvailability ..> DoctorScheduleProvider
-QueryAvailability ..> AgendaReader
-
-LocalScheduleProvider ..|> DoctorScheduleProvider
-EloquentAgendaReader ..|> AgendaReader
-DbTransactionRunner ..|> TransactionRunner
-DbTransactionRunner ..|> AgendaLock
-
-note bottom of RequestAppointment
-run( lockDoctorDay -> shiftsOf -> busySlotsOf
-     -> assertBookable -> save )
-La atomicidad es explicita en el caso de uso.
-end note
-
+ConfirmAppointment ..> AppointmentRepository
+CancelAppointment ..> AppointmentRepository
+Appointment --> TimeSlot
+EloquentAppointmentRepository ..|> AppointmentRepository
+DbAgendaLock ..|> AgendaLock
+ErrorMapper ..> AppointmentRuleViolation
+AppointmentRepositoryContractTest ..> TimeSlot
+AppointmentRepositoryContractTest ..> AppointmentRepository
 @enduml

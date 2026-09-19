@@ -1,99 +1,107 @@
 # Contratos de entrada y salida — Semana 7
 
 Contratos de los componentes del flujo **solicitud, validación de
-disponibilidad y confirmación o cancelación de cita**. Cada contrato indica qué
-recibe el componente, qué devuelve y qué errores puede producir. Los códigos de
-negocio son los definidos en el contrato de API de la semana 5.
+disponibilidad y confirmación o cancelación de cita**. Cada tabla separa lo
+que **existe** en la rama `feature/asii-05-semana-06-parcial-eddcastro` de lo
+que se **propone** esta semana, para no presentar como implementado lo que no
+lo está (mismo criterio que la matriz de la semana 6).
 
-## 1. Backend — casos de uso (capa Application)
+## 1. Backend — casos de uso (Application)
 
-### QueryAvailability
+### RequestAppointment — CU-01
 
-| Aspecto | Definición |
+| Aspecto | Existe | Propuesto |
+|---|---|---|
+| Entrada | `RequestAppointmentInput { patientId, doctorId, specialtyId, scheduledAt ('Y-m-d H:i:s'), durationMin (5–480, 30 por defecto), reason (opcional, máx. 500) }`, validado por `StoreAppointmentRequest` | — |
+| Salida | `AppointmentData { id, patient_id, doctor_id, specialty_id, scheduled_at, duration_min, status: 'pendiente', reason, notes }` | — |
+| Reglas | RN-01, 02, 09 en la entidad; RN-04 médico existe; RN-05 especialidad; RN-06 jornada; RN-07/08 sin cruce | — |
+| Errores | `AppointmentRuleViolation` (un solo tipo) | `code()` por regla: `APPOINTMENT_PAST_DATE`, `APPOINTMENT_INVALID_DURATION`, `DOCTOR_SPECIALTY_MISMATCH`, `DOCTOR_OUTSIDE_WORKING_HOURS`, `APPOINTMENT_SLOT_TAKEN` |
+| Concurrencia | `transaction()` + bloqueo dentro de `hasOverlap()` | Bloqueo explícito con `AgendaLock::lockDoctorDay()` |
+| Idempotencia | No implementada | Cabecera `Idempotency-Key` del contrato de la semana 5 |
+
+### ConfirmAppointment — CU-02
+
+| Aspecto | Existe | Propuesto |
+|---|---|---|
+| Entrada | `appointmentId: int` | Medio de contacto (teléfono, correo, presencial), previsto en la narrativa de la semana 1 |
+| Salida | `AppointmentData` con estado `confirmada` | — |
+| Errores | `AppointmentNotFound` (404), `transicionInvalida` (422) | `code()`: `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_INVALID_TRANSITION` |
+| Concurrencia | Ninguna: `findById → confirm → update` | `findByIdForUpdate` dentro de `transaction()` |
+
+### CancelAppointment — CU-03
+
+| Aspecto | Existe | Propuesto |
+|---|---|---|
+| Entrada | `appointmentId: int`, `reason: string` (3 a 500 caracteres en `CancelAppointmentRequest`; no vacío en la entidad, RN-12) | — |
+| Salida | `AppointmentData` con estado `cancelada` | — |
+| Efecto | El motivo se guarda en `notes` y el estado deja de bloquear el horario (`bloqueaHorario() = false`) | — |
+| Errores | `AppointmentNotFound`, `transicionInvalida`, `motivoDeCancelacionRequerido` | `code()`: `APPOINTMENT_CANCEL_REASON_REQUIRED` y los anteriores |
+| Concurrencia | Ninguna | Igual que confirmar |
+
+### GetAgenda — CU-05
+
+| Aspecto | Existe |
 |---|---|
-| Entrada | `doctorId: int`, `date: Y-m-d`, `durationMin: int` (15–120) |
-| Salida | `TimeSlot[]` libres, ordenados por hora de inicio |
-| Errores | `422 APPOINTMENT_INVALID_DURATION`, `404` médico inexistente en el tenant |
-| Efectos | Ninguno. Solo lectura, sin bloqueo |
-| Expuesto como | `GET /api/v1/doctors/{id}/availability?date=&duration=` |
-
-### RequestAppointment
-
-| Aspecto | Definición |
-|---|---|
-| Entrada | `RequestAppointmentInput { patientId, doctorId, specialtyId, scheduledAt, durationMin, reason, idempotencyKey }` |
-| Salida | `AppointmentOutput { id, status: "pendiente", scheduledAt, endsAt, doctorId, patientId }` |
-| Errores | `422 APPOINTMENT_PAST_DATE`, `422 APPOINTMENT_INVALID_DURATION`, `422 DOCTOR_OUTSIDE_WORKING_HOURS`, `409 APPOINTMENT_SLOT_TAKEN` |
-| Efectos | Una fila en `appointments`; evento de auditoría |
-| Concurrencia | Bloqueo del par médico + día dentro de la transacción; índice único parcial como segunda defensa |
-| Idempotencia | La misma `Idempotency-Key` devuelve la cita ya creada, sin duplicarla |
-
-### ConfirmAppointment
-
-| Aspecto | Definición |
-|---|---|
-| Entrada | `appointmentId: int`, `contactChannel` (teléfono, correo, presencial), `note?` |
-| Salida | `AppointmentOutput` con `status: "confirmada"` |
-| Errores | `404` cita inexistente o de otro tenant, `422 APPOINTMENT_INVALID_TRANSITION` |
-| Efectos | Cambio de estado y registro del medio de contacto |
-
-### CancelAppointment
-
-| Aspecto | Definición |
-|---|---|
-| Entrada | `appointmentId: int`, `reason: string` (obligatorio, 5–250 caracteres) |
-| Salida | `AppointmentOutput` con `status: "cancelada"` |
-| Errores | `404`, `422 APPOINTMENT_INVALID_TRANSITION`, `422 APPOINTMENT_CANCEL_REASON_REQUIRED` |
-| Efectos | Cambio de estado; el intervalo queda libre porque el índice parcial excluye canceladas |
+| Entrada | `doctorId?`, `patientId?`, `date?`, `status?`, `limit` (100 por defecto) |
+| Salida | `AppointmentData[]` ordenadas por fecha |
+| Errores | Ninguno propio; filtra siempre por tenant |
 
 ## 2. Backend — dominio y puertos
 
-| Componente | Entrada | Salida | Errores |
-|---|---|---|---|
-| `TimeSlot` | `start`, `end` | Objeto inmutable; `overlaps()`, `within()` | `InvalidTimeSlot` si `end <= start` |
-| `SlotPolicy::assertBookable` | Turnos del médico, citas activas, intervalo pedido | `void` | `OutsideWorkingHours`, `SlotTaken` |
-| `SlotPolicy::freeSlots` | Turnos, citas activas, duración | `TimeSlot[]` | — |
-| `Appointment::confirm / cancel` | — / motivo | Nuevo estado | `InvalidTransition` |
-| `DoctorScheduleProvider::shiftsOf` | `doctorId`, `date` | `TimeSlot[]` de jornada | `ScheduleUnavailable` → se rechaza, no se agenda a ciegas |
-| `AgendaReader::busySlotsOf` | `doctorId`, `date` | `TimeSlot[]` de citas pendientes o confirmadas | — |
-| `AgendaLock::lockDoctorDay` | `doctorId`, `date` | `void` | Tiempo de espera agotado → `409` |
-| `TransactionRunner::run` | `callable` | Resultado del callable | Revierte ante cualquier excepción |
+| Componente | Estado | Entrada | Salida | Errores |
+|---|---|---|---|---|
+| `Appointment::schedule` | Existe | tenant, paciente, médico, especialidad, fecha, duración, motivo | Cita `pendiente` | Fecha pasada, duración, campos obligatorios |
+| `Appointment::confirm` / `cancel` | Existe | — / motivo | Nuevo estado | Transición inválida, motivo requerido |
+| `AppointmentStatus::bloqueaHorario` | Existe | Estado | `bool` (pendiente y confirmada bloquean) | — |
+| `AppointmentRepository::hasOverlap` | Existe | tenant, médico, inicio, duración, excepto | `bool` | — |
+| `AppointmentRepository::transaction` | Existe | `callable` | Resultado del callable | Revierte ante excepción |
+| `DoctorAvailabilityRepository` | Existe | tenant, médico, especialidad o intervalo | `bool` | — |
+| `TenantContext::tenantId` | Existe | — | Tenant del middleware | `RuntimeException` sin tenant |
+| `AppointmentRepository::findByIdForUpdate` | Propuesto | tenant, id | Cita bloqueada o `null` | — |
+| `AgendaLock::lockDoctorDay` | Propuesto | tenant, médico, fecha | `void` | Tiempo de espera agotado |
+| `TimeSlot::overlaps` | Propuesto | Otro intervalo | `bool` | — |
 
 ## 3. Presentation — traducción de errores
 
-`ErrorMapper` es el único lugar donde una excepción de dominio se convierte en
-respuesta HTTP:
-
-| Excepción | HTTP | `code` |
+| Situación | Hoy | Propuesto (`ErrorMapper`, contrato semana 5) |
 |---|---|---|
-| `PastDate` | 422 | `APPOINTMENT_PAST_DATE` |
-| `OutsideWorkingHours` | 422 | `DOCTOR_OUTSIDE_WORKING_HOURS` |
-| `SlotTaken` | 409 | `APPOINTMENT_SLOT_TAKEN` |
-| `InvalidTransition` | 422 | `APPOINTMENT_INVALID_TRANSITION` |
-| `CancelReasonRequired` | 422 | `APPOINTMENT_CANCEL_REASON_REQUIRED` |
-| `AppointmentNotFound` | 404 | `APPOINTMENT_NOT_FOUND` |
+| Regla de negocio incumplida | 422 `{message}` | 422 `{message, code, request_id}` |
+| Horario ocupado | 422 `{message}` | **409** `APPOINTMENT_SLOT_TAKEN` |
+| Violación del índice único | No se traduce | 409 `APPOINTMENT_SLOT_TAKEN` |
+| Cita inexistente o de otro tenant | 404 `{message}` | 404 `APPOINTMENT_NOT_FOUND` |
+| Formato inválido | 422 de `FormRequest` | Sin cambio |
 
-## 4. Frontend — componentes Vue
+## 4. Frontend — componentes Vue (todos propuestos)
 
-| Componente | Props (entrada) | Eventos (salida) | Estados que muestra |
-|---|---|---|---|
-| `AppointmentRequestView` | `role` del usuario autenticado | — | Orquesta el paso activo |
-| `PatientPicker` | `query` | `select(patientId)` | vacío, cargando, sin resultados |
-| `DoctorSpecialtyFilter` | `specialties[]`, `doctors[]` | `change({specialtyId, doctorId, date})` | cargando, error de carga |
-| `AvailabilitySlotGrid` | `slots[]`, `selected`, `loading` | `select(slot)` | cargando, vacío ("sin horarios"), con horarios |
-| `AppointmentSummaryDialog` | `draft` (paciente, médico, horario, motivo) | `confirm()`, `back()` | enviando, éxito, conflicto 409 |
-| `AppointmentCard` + `StatusBadge` | `appointment` | `confirm(id)`, `cancel(id)` | pendiente, confirmada, cancelada (texto + ícono) |
-| `CancelAppointmentDialog` | `appointment` | `submit(reason)`, `close()` | validación del motivo, enviando, error |
-| `useAppointmentsApi` | Llamadas tipadas | `Promise<Result>` | Convierte `code` en mensaje de usuario |
+La implementación de las semanas 4 a 6 se entrega como API, sin interfaz. Los
+componentes siguientes se proponen sobre la base de interfaz de ASII-26 y son
+los que usan los wireframes de la semana 8.
+
+| Componente | Props (entrada) | Eventos (salida) | Estados que muestra | Endpoint |
+|---|---|---|---|---|
+| `AppointmentRequestView` | `role` del usuario | — | Paso activo | — |
+| `PatientPicker` | `query` | `select(patientId)` | Vacío, cargando, sin resultados | ASII-03 |
+| `DoctorSpecialtyFilter` | `specialties[]`, `doctors[]` | `change({specialtyId, doctorId, date})` | Cargando, error de carga | ASII-04 |
+| `AvailabilitySlotGrid` | `slots[]`, `selected`, `loading` | `select(slot)` | Cargando, vacío, con horarios | Fuente de horarios libres* |
+| `AppointmentSummaryDialog` | `draft` | `confirm()`, `back()` | Enviando, éxito, conflicto | `POST /appointments` |
+| `AppointmentCard` + `StatusBadge` | `appointment` | `confirm(id)`, `cancel(id)` | Pendiente, confirmada, cancelada | `GET /appointments` |
+| `CancelAppointmentDialog` | `appointment` | `submit(reason)`, `close()` | Validación, enviando, error | `PATCH /{id}/cancel` |
+| `useAppointmentsApi` | Llamadas tipadas | `Promise<Result>` | Traduce `code` a mensaje | Todos |
+
+\* Hoy no existe un endpoint que devuelva los horarios libres de un médico. El
+contrato de la semana 5 lo prevé como interfaz de ASII-04
+(`GET /api/v1/doctors/{id}/availability?date=`). La jornada tampoco se expone
+hoy por HTTP: vive detrás de `DoctorAvailabilityRepository`. Se declara como
+dependencia abierta con ASII-04 y no como parte de este refactor, que no amplía
+el módulo.
 
 ### Reglas del cliente
 
-- `useAppointmentsApi` genera la `Idempotency-Key` una sola vez por borrador de
-  cita y la reutiliza si el usuario reintenta, para que un doble clic o una
-  reconexión no creen dos citas.
 - La interfaz decide qué mostrar según `code`, nunca según el texto de
   `message`.
-- Ante `409 APPOINTMENT_SLOT_TAKEN`, la vista vuelve a `AvailabilitySlotGrid`,
-  recarga los horarios y conserva paciente, médico y motivo ya capturados.
-- Los botones Confirmar y Cancelar se muestran solo si el rol tiene el permiso
-  de la matriz de la semana 5; el backend vuelve a validarlo.
+- Ante `APPOINTMENT_SLOT_TAKEN`, la vista vuelve a la grilla, la recarga y
+  conserva paciente, médico y motivo.
+- `useAppointmentsApi` genera la `Idempotency-Key` una vez por borrador y la
+  reutiliza al reintentar.
+- Los botones se muestran según la matriz de roles de la semana 5; el backend
+  vuelve a validar.
