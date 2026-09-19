@@ -1,0 +1,109 @@
+@startuml
+title ASII-05 - Componentes backend y frontend\nSolicitud, validacion de disponibilidad y confirmacion o cancelacion de cita
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam packageStyle rectangle
+left to right direction
+
+package "Frontend Vue 3 (UI)" as FE {
+  component "AppointmentRequestView\n(pagina del flujo)" as View
+  component "PatientPicker" as FPat
+  component "DoctorSpecialtyFilter" as FDoc
+  component "AvailabilitySlotGrid" as FGrid
+  component "AppointmentSummaryDialog\n(confirmar solicitud)" as FSum
+  component "AppointmentCard\n+ StatusBadge" as FCard
+  component "CancelAppointmentDialog\n(motivo obligatorio)" as FCan
+  component "useAppointmentsApi\n(cliente HTTP, Idempotency-Key)" as FApi
+}
+
+package "Backend Laravel - ASII-05" as BE {
+  package "Presentation" {
+    component "AppointmentController\nAvailabilityController" as Ctrl
+    component "FormRequests\n(validacion de formato)" as FR
+    component "ErrorMapper\n(excepcion -> code HTTP)" as EM
+  }
+  package "Application" {
+    component "QueryAvailability" as UQ
+    component "RequestAppointment" as UR
+    component "ConfirmAppointment" as UC
+    component "CancelAppointment" as UX
+  }
+  package "Domain" {
+    component "Appointment\nAppointmentStatus" as DApp
+    component "TimeSlot\n(value object)" as DSlot
+    component "SlotPolicy\n(jornada + cruce)" as DPol
+    interface "AppointmentRepository" as PApp
+    interface "AgendaReader" as PAgenda
+    interface "DoctorScheduleProvider" as PSched
+    interface "TransactionRunner\n+ AgendaLock" as PTx
+  }
+  package "Persistence" {
+    component "EloquentAppointmentRepository" as AApp
+    component "EloquentAgendaReader" as AAgenda
+    component "LocalScheduleProvider\n(tabla doctor_availabilities)" as ASched
+    component "DbTransactionRunner\n(lockForUpdate medico+dia)" as ATx
+  }
+}
+
+database "PostgreSQL\nappointments\ndoctor_availabilities\nuq_appt_doctor_slot_active" as DB
+component "ASII-04\nMedicos y disponibilidad" as M04
+component "ASII-02 RBAC\nASII-01 Tenant" as M02
+
+View --> FPat
+View --> FDoc
+View --> FGrid
+View --> FSum
+View --> FCard
+FCard --> FCan
+FGrid --> FApi
+FSum --> FApi
+FCan --> FApi
+FApi --> Ctrl : HTTPS /api/v1\nJWT + X-Tenant-ID
+
+Ctrl --> FR
+Ctrl --> UQ
+Ctrl --> UR
+Ctrl --> UC
+Ctrl --> UX
+Ctrl --> EM
+
+UQ --> DPol
+UR --> DPol
+UR --> DApp
+UC --> DApp
+UX --> DApp
+DPol --> DSlot
+
+UQ ..> PSched
+UQ ..> PAgenda
+UR ..> PSched
+UR ..> PAgenda
+UR ..> PApp
+UR ..> PTx
+UC ..> PApp
+UC ..> PTx
+UX ..> PApp
+UX ..> PTx
+
+AApp ..|> PApp
+AAgenda ..|> PAgenda
+ASched ..|> PSched
+ATx ..|> PTx
+
+AApp --> DB
+AAgenda --> DB
+ASched --> DB
+ATx --> DB
+ASched ..> M04 : sustituible cuando\nASII-04 publique su API
+Ctrl ..> M02 : middleware jwt.auth,\ntenant, permisos
+
+note bottom of DPol
+Una sola regla de disponibilidad
+para consultar (UQ) y para escribir (UR):
+lo que la UI muestra libre es lo mismo
+que el backend acepta.
+end note
+
+@enduml
