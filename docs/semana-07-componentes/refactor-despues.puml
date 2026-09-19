@@ -1,0 +1,80 @@
+@startuml
+title DESPUES - Consulta pura, bloqueo explicito y errores tipados
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classAttributeIconSize 0
+hide empty members
+
+package Application {
+  class RequestAppointment {
+    transaction(
+      lockDoctorDay -> hasOverlap -> save )
+  }
+  class ConfirmAppointment {
+    transaction(
+      findByIdForUpdate -> confirm -> update )
+  }
+  class CancelAppointment {
+    transaction(
+      findByIdForUpdate -> cancel -> update )
+  }
+}
+
+package Domain {
+  class TimeSlot <<value object, propuesto>> {
+    +inicio, +fin
+    +overlaps(TimeSlot): bool
+  }
+  class Appointment {
+    +slot(): TimeSlot
+  }
+  class AppointmentRuleViolation {
+    +code(): string
+  }
+  interface AppointmentRepository {
+    +hasOverlap(...): bool  (solo consulta)
+    +findByIdForUpdate(tenant, id): ?Appointment
+    +transaction(callable): mixed
+  }
+  interface AgendaLock <<propuesto>> {
+    +lockDoctorDay(tenant, doctor, fecha): void
+  }
+}
+
+package Infrastructure {
+  class EloquentAppointmentRepository {
+    hasOverlap: SQL sin efectos
+    save: indice unico -> SlotTaken
+  }
+  class DbAgendaLock <<propuesto>> {
+    lockForUpdate medico + dia
+    (no-op en SQLite)
+  }
+}
+
+package Presentation {
+  class ErrorMapper <<propuesto>> {
+    code() -> 409 / 422 / 404
+  }
+}
+
+package tests {
+  class AppointmentRepositoryContractTest <<propuesto>> {
+    mismos casos de cruce para
+    Eloquent y Fake, comparados
+    con TimeSlot::overlaps()
+  }
+}
+
+RequestAppointment ..> AgendaLock
+RequestAppointment ..> AppointmentRepository
+ConfirmAppointment ..> AppointmentRepository
+CancelAppointment ..> AppointmentRepository
+Appointment --> TimeSlot
+EloquentAppointmentRepository ..|> AppointmentRepository
+DbAgendaLock ..|> AgendaLock
+ErrorMapper ..> AppointmentRuleViolation
+AppointmentRepositoryContractTest ..> TimeSlot
+AppointmentRepositoryContractTest ..> AppointmentRepository
+@enduml

@@ -1,0 +1,114 @@
+@startuml
+title ASII-05 - Componentes backend y frontend\nSolicitud, validacion de disponibilidad y confirmacion o cancelacion de cita
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam packageStyle rectangle
+left to right direction
+
+skinparam component {
+  BackgroundColor<<propuesto>> #FFF8E1
+  BorderColor<<propuesto>> #B8860B
+  BorderStyle<<propuesto>> dashed
+}
+
+package "Frontend Vue 3 (sobre la base de ASII-26)" as FE {
+  component "AppointmentRequestView" <<propuesto>> as View
+  component "PatientPicker" <<propuesto>> as FPat
+  component "DoctorSpecialtyFilter" <<propuesto>> as FDoc
+  component "AvailabilitySlotGrid" <<propuesto>> as FGrid
+  component "AppointmentSummaryDialog" <<propuesto>> as FSum
+  component "AppointmentCard\n+ StatusBadge" <<propuesto>> as FCard
+  component "CancelAppointmentDialog" <<propuesto>> as FCan
+  component "useAppointmentsApi" <<propuesto>> as FApi
+}
+
+package "Backend Laravel - ASII-05" as BE {
+  package "Presentation" {
+    component "AppointmentController" as Ctrl
+    component "StoreAppointmentRequest\nCancelAppointmentRequest\nAgendaRequest" as FR
+    component "ErrorMapper" <<propuesto>> as EM
+  }
+  package "Application" {
+    component "RequestAppointment" as UR
+    component "ConfirmAppointment" as UC
+    component "CancelAppointment" as UX
+    component "GetAgenda" as UG
+    component "RequestAppointmentInput\nAppointmentData (DTO)" as DTO
+  }
+  package "Domain" {
+    component "Appointment\nAppointmentStatus" as DApp
+    component "AppointmentRuleViolation\nAppointmentNotFound" as DExc
+    component "TimeSlot" <<propuesto>> as DSlot
+    interface "AppointmentRepository" as PApp
+    interface "DoctorAvailabilityRepository" as PAv
+    interface "TenantContext" as PTen
+    interface "AgendaLock" <<propuesto>> as PLock
+  }
+  package "Infrastructure" {
+    component "EloquentAppointmentRepository" as AApp
+    component "EloquentDoctorAvailabilityRepository" as AAv
+    component "RequestTenantContext" as ATen
+    component "DbAgendaLock" <<propuesto>> as ALock
+  }
+}
+
+database "appointments\ndoctor_availabilities\nuq_appt_doctor_slot_active" as DB
+component "ASII-01 Tenant\nASII-02 RBAC" as M02
+component "ASII-04\nMedicos y disponibilidad" as M04
+
+View --> FPat
+View --> FDoc
+View --> FGrid
+View --> FSum
+View --> FCard
+FCard --> FCan
+FGrid --> FApi
+FSum --> FApi
+FCan --> FApi
+FApi --> Ctrl : HTTPS /api/v1\nJWT + X-Tenant-ID
+
+Ctrl --> FR
+Ctrl --> UR
+Ctrl --> UC
+Ctrl --> UX
+Ctrl --> UG
+Ctrl --> EM
+Ctrl --> DTO
+
+UR --> DApp
+UC --> DApp
+UX --> DApp
+DApp --> DExc
+DApp --> DSlot
+
+UR ..> PApp
+UR ..> PAv
+UR ..> PTen
+UR ..> PLock
+UC ..> PApp
+UC ..> PLock
+UX ..> PApp
+UX ..> PLock
+UG ..> PApp
+
+AApp ..|> PApp
+AAv ..|> PAv
+ATen ..|> PTen
+ALock ..|> PLock
+
+AApp --> DB
+AAv --> DB
+ALock --> DB
+AAv ..> M04 : sustituible cuando\nASII-04 publique su API
+Ctrl ..> M02 : middleware tenant,\njwt.auth
+
+legend right
+  Recuadro normal: existe en la rama
+  feature/asii-05-semana-06-parcial-eddcastro
+  Recuadro punteado <<propuesto>>: diseno de
+  esta semana, todavia no implementado
+endlegend
+
+@enduml

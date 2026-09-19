@@ -1,0 +1,73 @@
+@startuml
+title ANTES - Punto de mayor acoplamiento: hasOverlap() y la atomicidad implicita
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classAttributeIconSize 0
+hide empty members
+
+class RequestAppointment <<Application>> {
+  +execute(RequestAppointmentInput): AppointmentData
+  --
+  transaction( hasOverlap -> save )
+}
+
+class ConfirmAppointment <<Application>> {
+  findById -> confirm() -> update
+  (sin transaccion)
+}
+
+class CancelAppointment <<Application>> {
+  findById -> cancel(motivo) -> update
+  (sin transaccion)
+}
+
+interface AppointmentRepository <<Domain>> {
+  +hasOverlap(tenant, doctor, inicio, dur, exceptoId): bool
+  +transaction(callable): mixed
+  +findById(tenant, id): ?Appointment
+  +update(Appointment): void
+}
+
+class EloquentAppointmentRepository <<Infrastructure>> {
+  +hasOverlap(...): bool
+  -- mezcla --
+  1. regla de cruce en SQL (3 dialectos)
+  2. if DB::transactionLevel() > 0
+     lockDoctorAgenda()  (efecto oculto)
+  3. excepcion SQLite para el bloqueo
+}
+
+class FakeAppointmentRepository <<tests>> {
+  +hasOverlap(...): bool
+  regla de cruce reescrita en PHP
+}
+
+class AppointmentController <<Presentation>> {
+  AppointmentRuleViolation -> 422 {message}
+  violacion del indice unico -> sin capturar (500)
+}
+
+RequestAppointment ..> AppointmentRepository
+ConfirmAppointment ..> AppointmentRepository
+CancelAppointment ..> AppointmentRepository
+EloquentAppointmentRepository ..|> AppointmentRepository
+FakeAppointmentRepository ..|> AppointmentRepository
+AppointmentController --> RequestAppointment
+AppointmentController --> ConfirmAppointment
+AppointmentController --> CancelAppointment
+
+note bottom of EloquentAppointmentRepository
+Un metodo de consulta decide si bloquea
+segun un estado global de la conexion:
+si alguien lo llama fuera de transaction(),
+la proteccion de la semana 6 desaparece
+sin error visible.
+end note
+
+note bottom of ConfirmAppointment
+Confirmar y cancelar leen y escriben sin
+bloqueo: si Enfermeria confirma mientras
+Recepcion cancela, gana la ultima escritura.
+end note
+@enduml
