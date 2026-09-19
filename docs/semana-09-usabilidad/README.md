@@ -8,6 +8,7 @@ Módulo **ASII-05 — Citas médicas y agenda**.
 | Código | 1890-23-16857 |
 | GitHub | EddCastro |
 | Correo | ecastrov5@miumg.edu.gt |
+| Issue | #5 |
 | Rama | `feature/week-09-usabilidad` |
 
 ## Tarea
@@ -35,6 +36,7 @@ directamente el núcleo del módulo:
 | Evidencia de al menos 6 hallazgos | [`hallazgos.md`](hallazgos.md) + capturas en [`evidencia/`](evidencia) |
 | Backlog priorizado con corrección y criterio verificable | [`backlog-priorizado.md`](backlog-priorizado.md) |
 | Mediciones reproducibles | [`evidencia/medir.py`](evidencia/medir.py) → `contrastes.md`, `teclado.md` |
+| Guía de defensa oral | [`GUIA_DEFENSA_ORAL.md`](GUIA_DEFENSA_ORAL.md) |
 | Declaración de IA | [`DECLARACION_IA.md`](DECLARACION_IA.md) |
 
 ## Método
@@ -45,6 +47,33 @@ directamente el núcleo del módulo:
 4. Medición automatizada: contraste con la fórmula de luminancia relativa y
    conteo de elementos operables por teclado en la grilla.
 5. Priorización por severidad × frecuencia × peso del concepto.
+
+## Alcance de la entrega
+
+Incluye:
+
+- Evaluación del user flow y de los seis wireframes de la semana 8.
+- Inspección con las 10 heurísticas de Nielsen y 19 criterios de WCAG 2.2.
+- Once hallazgos con captura y, cuando aplica, medición.
+- Backlog priorizado con corrección propuesta y criterio verificable.
+
+No incluye:
+
+- Pruebas con usuarios reales: el módulo no tiene todavía interfaz
+  implementada ni usuarios del hospital disponibles.
+- Evaluación con lectores de pantalla reales; se evalúa la especificación.
+- Aplicación de las correcciones, que corresponde a las semanas 10 y 11.
+
+## Validación
+
+El script de evidencia se ejecutó sin errores:
+
+```powershell
+python docs/semana-09-usabilidad/evidencia/medir.py
+```
+
+Terminó con código de salida `0` y regeneró `contrastes.md`, `teclado.md` y
+las nueve capturas de `evidencia/`.
 
 ## Reproducir la evidencia
 
