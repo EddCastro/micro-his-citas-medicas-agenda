@@ -8,6 +8,7 @@ Módulo **ASII-05 — Citas médicas y agenda**.
 | Código | 1890-23-16857 |
 | GitHub | EddCastro |
 | Correo | ecastrov5@miumg.edu.gt |
+| Issue | #5 |
 | Rama | `feature/week-11-prototipo` |
 
 ## Tarea
@@ -26,6 +27,14 @@ consistencia de roles, estados y accesibilidad.
 
 Es HTML, CSS y JavaScript sin librerías. Los datos son ficticios y viven en
 memoria: al recargar la página se reinician.
+
+## Estado
+
+El prototipo **no está conectado al backend**: simula sus respuestas. Las
+reglas de los campos son las mismas de los `FormRequest` de Laravel, y el
+error de horario ocupado se muestra con el código 409 del diseño propuesto en
+la semana 7 (hoy el backend responde 422). Ver
+[`verificacion.md`](verificacion.md), sección 3.
 
 ### Cómo recorrerlo
 
@@ -47,6 +56,7 @@ memoria: al recargar la página se reinician.
 | Capturas desktop y móvil del camino feliz | [`capturas/`](capturas) — pasos 01 a 07 |
 | Capturas desktop y móvil del error crítico | [`capturas/`](capturas) — pasos 08 a 10 |
 | Consistencia de roles, estados y accesibilidad | [`verificacion.md`](verificacion.md) |
+| Guía de defensa oral | [`GUIA_DEFENSA_ORAL.md`](GUIA_DEFENSA_ORAL.md) |
 | Declaración de IA | [`DECLARACION_IA.md`](DECLARACION_IA.md) |
 
 ## Mapa de navegación
@@ -99,6 +109,33 @@ el usuario.
 Detalle de cita (11), validación del motivo de cancelación (12), cita
 cancelada (13), sin conexión (14) y vista de la Enfermera (15), en ambos
 tamaños.
+
+## Alcance de la entrega
+
+Incluye:
+
+- Prototipo navegable del flujo asignado en escritorio y móvil.
+- Camino feliz y error crítico de concurrencia, más cancelación, conexión
+  limitada y vista por rol.
+- Mapa de navegación y capturas de cada paso.
+- Verificación automatizada de los criterios del backlog de la semana 9 y de
+  las reglas del backend.
+
+No incluye:
+
+- Conexión con la API Laravel.
+- Reagendamiento, lista de espera ni notificaciones.
+- Diseño visual definitivo del sistema (ASII-26).
+
+## Validación
+
+```powershell
+python prototipo/pruebas/verificar.py
+java -jar "$HOME\Tools\PlantUML\plantuml.jar" -checkonly ".\docs\semana-11-prototipo\*.puml"
+```
+
+La verificación terminó con **40 de 40 criterios cumplidos** y código de
+salida `0`; PlantUML terminó con código de salida `0`.
 
 ## Reproducir capturas y verificación
 

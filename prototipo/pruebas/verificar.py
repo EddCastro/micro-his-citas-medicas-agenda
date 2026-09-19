@@ -157,8 +157,19 @@ with sync_playwright() as p:
     inv = pg.get_attribute("#reasonCancel", "aria-invalid")
     desc = pg.get_attribute("#reasonCancel", "aria-describedby") or ""
     txt = pg.inner_text("#reasonCancelErr")
-    registrar("H-08", "El error del motivo está asociado (aria-describedby, aria-invalid) y dice qué falta", inv == "true" and "reasonCancelErr" in desc and "5 caracteres" in txt, txt)
-    pg.click("#btnKeep")
+    registrar("H-08", "El error del motivo está asociado (aria-describedby, aria-invalid) y dice qué falta", inv == "true" and "reasonCancelErr" in desc and "3 caracteres" in txt, txt)
+
+    # Reglas iguales a los FormRequest del backend
+    pg.fill("#reasonCancel", "ab"); pg.click("#btnDoCancel")
+    rechaza_2 = pg.is_visible("#reasonCancelErr")
+    registrar("BACKEND", "Cancelar con 2 caracteres se rechaza (CancelAppointmentRequest pide mínimo 3)", rechaza_2)
+    registrar("BACKEND", "El motivo de cancelación admite hasta 500 caracteres", pg.get_attribute("#reasonCancel", "maxlength") == "500")
+    pg.fill("#reasonCancel", "abc"); pg.click("#btnDoCancel"); pg.wait_for_selector(".alert.ok")
+    registrar("BACKEND", "Cancelar con 3 caracteres se acepta", "Cancelada" in pg.inner_text("main"))
+    hasta_paso4(pg, "Cifuentes", "14:00")
+    registrar("BACKEND", "El motivo de la consulta es opcional y admite hasta 500 caracteres (StoreAppointmentRequest)", pg.get_attribute("#motivo", "maxlength") == "500")
+    pg.click("#n4"); pg.wait_for_selector("#okPanel")
+    registrar("BACKEND", "Se puede agendar sin motivo de consulta", pg.is_visible("#okPanel"))
 
     # H-07: fechas con día de la semana y mes en letras
     pg.goto(URL + "#/cita/182"); cuerpo = pg.inner_text("main")

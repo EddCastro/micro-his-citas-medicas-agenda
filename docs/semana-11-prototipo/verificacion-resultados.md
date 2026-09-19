@@ -2,7 +2,7 @@
 
 Generado por `python prototipo/pruebas/verificar.py` (Playwright + axe-core).
 
-**35 de 35 criterios cumplidos.**
+**40 de 40 criterios cumplidos.**
 
 | Referencia | Criterio | Resultado | Detalle |
 |---|---|---|---|
@@ -29,7 +29,12 @@ Generado por `python prototipo/pruebas/verificar.py` (Playwright + axe-core).
 | H-09 | Foco inicial en el motivo | Cumple | reasonCancel |
 | H-09 | Tab no sale del diálogo abierto | Cumple |  |
 | H-09 | Escape cierra y el foco vuelve a "Cancelar cita" | Cumple | bCancelar |
-| H-08 | El error del motivo está asociado (aria-describedby, aria-invalid) y dice qué falta | Cumple | Escriba el motivo de la cancelación: al menos 5 caracteres. |
+| H-08 | El error del motivo está asociado (aria-describedby, aria-invalid) y dice qué falta | Cumple | Escriba el motivo de la cancelación: al menos 3 caracteres. |
+| BACKEND | Cancelar con 2 caracteres se rechaza (CancelAppointmentRequest pide mínimo 3) | Cumple |  |
+| BACKEND | El motivo de cancelación admite hasta 500 caracteres | Cumple |  |
+| BACKEND | Cancelar con 3 caracteres se acepta | Cumple |  |
+| BACKEND | El motivo de la consulta es opcional y admite hasta 500 caracteres (StoreAppointmentRequest) | Cumple |  |
+| BACKEND | Se puede agendar sin motivo de consulta | Cumple |  |
 | H-07 | La fecha visible incluye día de la semana y mes en letras | Cumple |  |
 | H-07 | No aparecen fechas numéricas dd/mm/aaaa en el texto | Cumple |  |
 | H-10 | La ayuda es un botón con texto y abre con teclado | Cumple |  |

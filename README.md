@@ -100,12 +100,14 @@ que lo evidencian.
 
 ### Semana 7 — Componentes y refactorización
 
-Componentes backend y frontend del flujo con sus contratos de entrada y
-salida. Refactor conceptual del punto de mayor acoplamiento,
-`AvailabilityRepository::isAvailable()`, que mezclaba jornada del médico,
-regla de cruce en SQL, estados que ocupan agenda y concurrencia implícita:
-queda dividido en `SlotPolicy` + `TimeSlot` en el dominio y en puertos de
-lectura y de atomicidad explícitos.
+Componentes backend (existentes) y frontend (propuestos) del flujo, con sus
+contratos de entrada, salida y error. Refactor conceptual sobre el código
+Laravel del punto de mayor acoplamiento,
+`EloquentAppointmentRepository::hasOverlap()`, que además de consultar
+bloqueaba la agenda solo si detectaba una transacción abierta. El análisis
+encontró también que confirmar y cancelar se ejecutan sin transacción. El
+refactor hace explícito el bloqueo, deja la consulta sin efectos, protege las
+transiciones y tipa los errores.
 
 ### Semana 8 — Experiencia de usuario
 
@@ -131,8 +133,8 @@ limitada en Enfermería.
 Prototipo HTML en [`prototipo/index.html`](prototipo/index.html), desktop y
 móvil, con camino feliz y error crítico de concurrencia (409), mapa de
 navegación y capturas. Una verificación automatizada con Playwright y
-axe-core confirma 35 de 35 criterios, entre ellos el cierre de los once
-hallazgos de la semana 9.
+axe-core confirma 40 de 40 criterios, entre ellos el cierre de los once
+hallazgos de la semana 9 y las reglas de los formularios del backend.
 
 En línea: https://eddcastro.github.io/micro-his-citas-medicas-agenda/prototipo/
 
