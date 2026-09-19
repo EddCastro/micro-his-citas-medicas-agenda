@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo ASII-05 — Citas médicas y agenda</title>
+<style>
+  :root {
+    --bg: #f4f6f8; --surface: #ffffff; --text: #1b1f24; --muted: #4a5561;
+    --border: #6b7580; --line: #d5dbe1;
+    --primary: #1f5f8b; --primary-dark: #174a6c; --on-primary: #ffffff;
+    --danger: #a4262c; --danger-bg: #fdecec;
+    --ok: #1e6b34; --ok-bg: #e7f4ea;
+    --warn: #6b4e00; --warn-bg: #fff3cd;
+    --muted-bg: #eceff2; --busy-text: #595959;
+    --focus: #0b57d0;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 "Segoe UI", "DejaVu Sans", Roboto, Arial, sans-serif; }
+  a { color: var(--primary); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  h1:focus { outline: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip { position: absolute; left: 8px; top: -60px; background: var(--surface); padding: 8px 12px; z-index: 50; border: 2px solid var(--focus); }
+  .skip:focus { top: 8px; }
+
+  /* Barra superior */
+  header.app { background: var(--primary-dark); color: #fff; }
+  .app-in { max-width: 1180px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .brand { font-weight: 700; font-size: 17px; margin-right: auto; }
+  .brand small { display: block; font-weight: 400; font-size: 13px; opacity: .9; }
+  .role label { font-size: 13px; margin-right: 6px; }
+  .role select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: 6px; border: 1px solid #fff; }
+  .demo { background: #fff8e1; border-bottom: 1px solid #e6d7a3; font-size: 14px; }
+  .demo .app-in { padding: 6px 16px; gap: 16px; }
+  .demo b { color: var(--warn); }
+  .demo details { display: block; }
+  .demo summary { cursor: pointer; min-height: 32px; padding: 6px 0; }
+  .demo details[open] summary { margin-bottom: 2px; }
+  .demo details label { margin-right: 16px; }
+  .demo label { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
+
+  .offline { background: #333; color: #fff; }
+  .offline .app-in { padding: 8px 16px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 24px; margin: 4px 0 12px; }
+  h2 { font-size: 19px; margin: 0 0 10px; }
+  h3 { font-size: 16px; margin: 0 0 8px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .between { justify-content: space-between; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+
+  /* Botones */
+  .btn { font: inherit; font-weight: 600; min-height: 44px; padding: 10px 18px; border-radius: 6px; border: 2px solid var(--primary); background: var(--surface); color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+  .btn.primary { background: var(--primary); color: var(--on-primary); }
+  .btn.primary:hover { background: var(--primary-dark); }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn.secondary { border-color: var(--border); color: var(--text); }
+  .btn[disabled], .btn[disabled]:hover { background: var(--muted-bg); border-color: var(--muted-bg); color: var(--busy-text); cursor: not-allowed; }
+  .btn.link { border: 0; background: none; padding: 4px 0; min-height: 0; text-decoration: underline; color: var(--primary); font-weight: 600; }
+
+  /* Formularios */
+  .field { margin-bottom: 14px; }
+  .field label, .field legend { display: block; font-weight: 600; margin-bottom: 4px; }
+  .req { font-weight: 400; color: var(--muted); font-size: 14px; }
+  input[type=text], input[type=search], input[type=date], select, textarea {
+    font: inherit; width: 100%; max-width: 460px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text);
+  }
+  textarea { min-height: 88px; resize: vertical; }
+  [aria-invalid=true] { border: 2px solid var(--danger); }
+  .hint { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .err { font-size: 14px; color: var(--danger); margin-top: 4px; font-weight: 600; }
+  .fields3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; max-width: 900px; }
+
+  /* Estados de cita: texto + icono + color (H-01) */
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .b-pendiente { color: var(--warn); background: var(--warn-bg); }
+  .b-confirmada { color: var(--ok); background: var(--ok-bg); }
+  .b-cancelada { color: var(--danger); background: var(--danger-bg); }
+
+  /* Agenda */
+  table.agenda { width: 100%; border-collapse: collapse; background: var(--surface); }
+  .agenda th, .agenda td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .agenda th { background: var(--muted-bg); font-size: 14px; }
+  .agenda tr.nueva { background: #eef6fc; }
+  .cards { display: none; list-style: none; margin: 0; padding: 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; align-items: flex-end; }
+  .filters .field { margin: 0; }
+  .filters select, .filters input { width: auto; min-width: 180px; }
+
+  /* Pasos */
+  .steps { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 16px; counter-reset: s; }
+  .steps li { flex: 1; padding: 8px 10px; border-bottom: 4px solid var(--line); color: var(--muted); font-size: 14px; }
+  .steps li.done { border-color: var(--primary); color: var(--text); }
+  .steps li[aria-current=step] { border-color: var(--primary-dark); color: var(--text); font-weight: 700; background: #e8f1f8; }
+  .progress-m { display: none; }
+
+  /* Grilla de horarios como radiogroup (H-03) */
+  .slots-h { margin: 12px 0 6px; font-size: 15px; }
+  .slots { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; max-width: 900px; }
+  .slot { min-height: 44px; border-radius: 6px; border: 2px solid var(--primary); background: #fff; color: var(--primary); font: inherit; font-weight: 700; cursor: pointer; padding: 4px; }
+  .slot[aria-checked=true] { background: var(--primary); color: #fff; }
+  .slot[aria-disabled=true] { background: var(--muted-bg); border: 1px dashed var(--border); color: var(--busy-text); font-weight: 400; cursor: not-allowed; }
+  .slot[aria-disabled=true] .t { text-decoration: line-through; }
+  .slot .s { display: block; font-size: 12px; font-weight: 400; }
+  .slot.recien { border: 2px solid var(--danger); color: var(--danger); background: var(--danger-bg); }
+  .skel { height: 44px; border-radius: 6px; background: linear-gradient(90deg, #e3e7eb 25%, #f0f2f4 50%, #e3e7eb 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
+  @keyframes sh { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+
+  /* Alertas */
+  .alert { border-radius: var(--radius); padding: 12px 14px; margin: 0 0 14px; border-left: 6px solid; background: #fff; }
+  .alert:focus { outline: 3px solid var(--focus); }
+  .alert.error { border-color: var(--danger); background: var(--danger-bg); }
+  .alert.ok { border-color: var(--ok); background: var(--ok-bg); }
+  .alert.info { border-color: var(--primary); background: #e8f1f8; }
+  .alert h2, .alert h3 { margin: 0 0 4px; font-size: 17px; }
+  .alert p { margin: 0 0 6px; }
+
+  .summary { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; margin: 0 0 12px; }
+  .summary dt { font-weight: 600; color: var(--muted); }
+  .summary dd { margin: 0; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+
+  dialog { border: 0; border-radius: 12px; padding: 20px; width: min(520px, calc(100vw - 32px)); box-shadow: 0 10px 40px rgba(0,0,0,.3); color: var(--text); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .help-box { margin-top: 8px; }
+
+  /* ===== Tablet ===== */
+  @media (max-width: 1023px) {
+    .slots { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .fields3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ===== Móvil 320–599 (objetivo 320–430) ===== */
+  @media (max-width: 599px) {
+    body { font-size: 16px; }
+    main { padding: 12px 12px 96px; }
+    h1 { font-size: 21px; }
+    .brand small { display: none; }
+    .role label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .demo .app-in { gap: 4px 12px; }
+    .demo .d-title { width: 100%; }
+    .filters { flex-direction: column; align-items: stretch; }
+    .filters select, .filters input { width: 100%; min-width: 0; }
+    table.agenda { display: none; }
+    .cards { display: block; }
+    .cards li { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; }
+    .cards li.nueva { background: #eef6fc; }
+    .cards .hora { font-size: 18px; font-weight: 700; }
+    .cards .ver { grid-column: 1 / -1; }
+    .steps { display: none; }
+    .progress-m { display: block; margin: 0 0 12px; }
+    .progress-m .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .progress-m .bar span { display: block; height: 100%; background: var(--primary); }
+    .fields3 { grid-template-columns: 1fr; }
+    input, select, textarea { max-width: none !important; }
+    .slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .summary { grid-template-columns: 1fr; gap: 0; }
+    .summary dd { margin-bottom: 8px; }
+    .actions.sticky { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -4px 12px rgba(0,0,0,.08); z-index: 20; }
+    .actions.sticky .btn { flex: 1; }
+    .actions.sticky .btn.primary, .actions.sticky .btn.danger { flex: 2; }
+    .actions:not(.sticky) .btn { width: 100%; }
+    dialog { width: 100vw; max-width: 100vw; margin: auto 0 0; border-radius: 16px 16px 0 0; }
+    dialog .actions .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="app">
+  <div class="app-in">
+    <div class="brand">Citas médicas y agenda<small>Hospital Central · Sistema Hospitalario Integrado</small></div>
+    <div class="role">
+      <label for="role">Rol</label>
+      <select id="role" aria-label="Rol de la sesión">
+        <option value="recepcion">Recepcionista</option>
+        <option value="enfermera">Enfermera</option>
+        <option value="medico">Médico (Dr. Ruiz)</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div class="demo" role="region" aria-label="Controles del prototipo">
+  <details class="app-in" id="demoBox">
+    <summary><b>Prototipo</b> · datos ficticios · controles de simulación</summary>
+    <label><input type="checkbox" id="sim409"> Otro usuario toma el horario (409)</label>
+    <label><input type="checkbox" id="simOffline"> Sin conexión</label>
+  </details>
+</div>
+<div id="offlineBar" class="offline" hidden role="status">
+  <div class="app-in">Sin conexión. Puede revisar la agenda ya cargada; agendar, confirmar y cancelar se habilitan al reconectar. Lo capturado no se pierde.</div>
+</div>
+
+<main id="main" tabindex="-1"></main>
+
+<dialog id="dlgCancel" aria-labelledby="dlgCancelT">
+  <form method="dialog" id="formCancel" novalidate>
+    <h2 id="dlgCancelT">¿Cancelar esta cita?</h2>
+    <p id="dlgCancelInfo"></p>
+    <div class="field">
+      <label for="reasonCancel">Motivo de la cancelación <span class="req">(obligatorio)</span></label>
+      <textarea id="reasonCancel" maxlength="500" aria-describedby="reasonCancelHint reasonCancelErr"></textarea>
+      <div class="hint" id="reasonCancelHint">Entre 3 y 500 caracteres. El horario quedará libre para otro paciente.</div>
+      <div class="err" id="reasonCancelErr" hidden></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn secondary" id="btnKeep">Volver sin cancelar</button>
+      <button type="submit" class="btn danger" id="btnDoCancel">Sí, cancelar cita</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgConfirm" aria-labelledby="dlgConfirmT">
+  <form method="dialog" id="formConfirm">
+    <h2 id="dlgConfirmT">Confirmar asistencia</h2>
+    <p id="dlgConfirmInfo"></p>
+    <fieldset class="field" style="border:0;padding:0;margin:0 0 14px">
+      <legend>¿Por qué medio confirmó el paciente? <span class="req">(obligatorio)</span></legend>
+      <label style="font-weight:400;display:flex;gap:8px;min-height:36px;align-items:center"><input type="radio" name="canal" value="Teléfono" checked> Teléfono</label>
+      <label style="font-weight:400;display:flex;gap:8px;min-height:36px;align-items:center"><input type="radio" name="canal" value="Correo"> Correo</label>
+      <label style="font-weight:400;display:flex;gap:8px;min-height:36px;align-items:center"><input type="radio" name="canal" value="Presencial"> Presencial</label>
+    </fieldset>
+    <div class="actions">
+      <button type="button" class="btn secondary" id="btnConfirmBack">Volver</button>
+      <button type="submit" class="btn primary">Confirmar asistencia</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+  // ---------- Datos ficticios ----------
+  const HOY = new Date(2026, 9, 5); // lunes 5 oct 2026
+  const MEDICOS = [
+    { id: 1, nombre: 'Dr. Ruiz', esp: 'Medicina interna' },
+    { id: 2, nombre: 'Dra. Solís', esp: 'Pediatría' },
+    { id: 3, nombre: 'Dr. Méndez', esp: 'Medicina interna' },
+  ];
+  const ESPECIALIDADES = ['Medicina interna', 'Pediatría'];
+  const PACIENTES = [
+    { id: 1, nombre: 'Ana Lucía Pérez Arana', corto: 'Ana L. P.', exp: '10-4471', dpi: '5521' },
+    { id: 2, nombre: 'Carlos Manuel Gómez', corto: 'Carlos M. G.', exp: '10-3310', dpi: '0917' },
+    { id: 3, nombre: 'Lucía Teresa Ramírez', corto: 'Lucía T. R.', exp: '11-0082', dpi: '7730' },
+    { id: 4, nombre: 'Mario Alberto Cifuentes', corto: 'Mario A. C.', exp: '09-9921', dpi: '3104' },
+    { id: 5, nombre: 'José Rodrigo López', corto: 'José R. L.', exp: '12-1450', dpi: '6618' },
+  ];
+  const JORNADA = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+  let seq = 183;
+  const citas = [
+    { id: 180, pac: 2, med: 1, fecha: iso(HOY), hora: '08:30', estado: 'pendiente', motivo: 'Seguimiento de laboratorio' },
+    { id: 181, pac: 3, med: 2, fecha: iso(HOY), hora: '09:00', estado: 'cancelada', motivo: 'Control de niño sano' },
+    { id: 182, pac: 4, med: 2, fecha: iso(HOY), hora: '09:30', estado: 'pendiente', motivo: 'Tos persistente' },
+    { id: 183, pac: 5, med: 1, fecha: iso(HOY), hora: '10:00', estado: 'confirmada', motivo: 'Control de presión arterial' },
+    { id: 179, pac: 1, med: 3, fecha: iso(HOY), hora: '08:00', estado: 'confirmada', motivo: 'Chequeo anual' },
+  ];
+
+  // ---------- Utilidades ----------
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+  const DIAS = ['dom','lun','mar','mié','jue','vie','sáb'];
+  const DIAS_L = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  // Formato sin ambigüedad (H-07)
+  function fCorta(s) { const d = parse(s); return `${DIAS[d.getDay()]} ${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()}`; }
+  function fLarga(s) { const d = parse(s); return `${DIAS_L[d.getDay()]} ${d.getDate()} de ${MESES_L[d.getMonth()]} de ${d.getFullYear()}`; }
+  function addDays(s, n) { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); }
+  function fin(h, min) { const [a, b] = h.split(':').map(Number); const t = a * 60 + b + min; return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pac = (id) => PACIENTES.find(p => p.id === id);
+  const med = (id) => MEDICOS.find(m => m.id === id);
+  const codigo = (id) => 'CT-' + String(id).padStart(6, '0');
+  const ESTADO = {
+    pendiente: '<span class="badge b-pendiente"><span aria-hidden="true">●</span> Pendiente</span>',
+    confirmada: '<span class="badge b-confirmada"><span aria-hidden="true">✓</span> Confirmada</span>',
+    cancelada: '<span class="badge b-cancelada"><span aria-hidden="true">✕</span> Cancelada</span>',
+  };
+  const PERM = {
+    recepcion: { crear: true, confirmar: true, cancelar: true },
+    enfermera: { crear: false, confirmar: true, cancelar: false },
+    medico: { crear: false, confirmar: false, cancelar: false },
+  };
+  const rol = () => $('#role').value;
+  const offline = () => $('#simOffline').checked;
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+
+  // ---------- Estado de UI ----------
+  const view = { fecha: iso(HOY), filtroMed: 'todos', filtroEstado: 'todos', resaltada: null, exito: null };
+  const draft = { pac: null, esp: '', med: null, fecha: addDays(iso(HOY), 1), dur: 30, hora: null, motivo: '', key: null, recien: null, error: null };
+  function resetDraft() { Object.assign(draft, { pac: null, esp: '', med: null, fecha: addDays(iso(HOY), 1), dur: 30, hora: null, motivo: '', key: null, recien: null, error: null }); }
+
+  // ---------- "API" simulada ----------
+  function ocupados(medId, fecha) { return citas.filter(c => c.med === medId && c.fecha === fecha && c.estado !== 'cancelada').map(c => c.hora); }
+  function libres(medId, fecha) {
+    const d = parse(fecha).getDay();
+    if (d === 0 || d === 6) return [];
+    const occ = ocupados(medId, fecha);
+    return JORNADA.map(h => ({ h, libre: !occ.includes(h) }));
+  }
+  async function apiCrear(body) {
+    await sleep(700);
+    if (offline()) throw { net: true };
+    const ya = citas.find(c => c.key && c.key === body.key);
+    if (ya) return { status: 201, cita: ya }; // Idempotency-Key: no duplica
+    if ($('#sim409').checked) {
+      // Otro usuario reservó ese horario entre la consulta y el envío
+      citas.push({ id: ++seq, pac: 4, med: body.med, fecha: body.fecha, hora: body.hora, estado: 'pendiente', motivo: 'Reservada por otro usuario' });
+      $('#sim409').checked = false;
+      return { status: 409, code: 'APPOINTMENT_SLOT_TAKEN' };
+    }
+    if (ocupados(body.med, body.fecha).includes(body.hora)) return { status: 409, code: 'APPOINTMENT_SLOT_TAKEN' };
+    const c = { id: ++seq, pac: body.pac, med: body.med, fecha: body.fecha, hora: body.hora, estado: 'pendiente', motivo: body.motivo, key: body.key };
+    citas.push(c);
+    return { status: 201, cita: c };
+  }
+  async function apiCambiar(id, estado) {
+    await sleep(500);
+    if (offline()) throw { net: true };
+    const c = citas.find(x => x.id === id);
+    if (!c) return { status: 404 };
+    if (c.estado === 'cancelada' || (estado === 'confirmada' && c.estado === 'confirmada')) return { status: 422, code: 'APPOINTMENT_INVALID_TRANSITION' };
+    c.estado = estado;
+    return { status: 200, cita: c };
+  }
+
+  // ---------- Enrutador ----------
+  const main = $('#main');
+  function go(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+  window.addEventListener('hashchange', render);
+  function render() {
+    const h = location.hash || '#/agenda';
+    const m = h.match(/^#\/nueva\/(\d)$/);
+    const c = h.match(/^#\/cita\/(\d+)$/);
+    if (m) {
+      if (!PERM[rol()].crear) return go('#/agenda');
+      const n = Number(m[1]);
+      // No se puede saltar a un paso sin completar los anteriores
+      const max = !draft.pac ? 1 : !(draft.med && draft.fecha) ? 2 : !draft.hora ? 3 : 4;
+      if (n > max) return go('#/nueva/' + max);
+      renderPaso(n);
+    } else if (c) renderDetalle(Number(c[1]));
+    else renderAgenda();
+  }
+  function setTitle(t, focus = true) {
+    document.title = t + ' — Citas médicas y agenda';
+    if (focus) { const h1 = $('h1', main); if (h1) { h1.tabIndex = -1; h1.focus({ preventScroll: false }); } }
+  }
+
+  // ---------- Agenda (W1) ----------
+  function renderAgenda() {
+    const r = rol(), p = PERM[r];
+    const medFijo = r === 'medico' ? 1 : null;
+    if (r === 'enfermera' && view.filtroEstado === 'todos' && !view._enf) { view.filtroEstado = 'pendiente'; view._enf = true; }
+    let lista = citas.filter(c => c.fecha === view.fecha)
+      .filter(c => medFijo ? c.med === medFijo : (view.filtroMed === 'todos' || c.med === Number(view.filtroMed)))
+      .filter(c => view.filtroEstado === 'todos' || c.estado === view.filtroEstado)
+      .sort((a, b) => a.hora.localeCompare(b.hora));
+    const titulo = r === 'medico' ? 'Mi agenda' : 'Agenda del día';
+    const exito = view.exito ? citas.find(c => c.id === view.exito) : null;
+    main.innerHTML = `
+      ${exito ? `<div class="alert ok" role="status" id="okPanel" tabindex="-1">
+          <h2>Cita agendada · código ${codigo(exito.id)}</h2>
+          <p>${esc(pac(exito.pac).nombre)} · ${esc(med(exito.med).nombre)} · ${fCorta(exito.fecha)}, ${exito.hora}.</p>
+          <p class="small">Queda <b>pendiente</b> hasta que Enfermería confirme la asistencia.</p>
+          <div class="row"><button class="btn secondary" id="okVer">Ver la cita</button>${p.crear ? '<button class="btn secondary" id="okOtra">Agendar otra cita</button>' : ''}<button class="btn link" id="okCerrar">Cerrar aviso</button></div>
+        </div>` : ''}
+      <div class="row between">
+        <h1>${titulo}</h1>
+        ${p.crear ? '<a class="btn primary" href="#/nueva/1" id="btnNueva">+ Nueva cita</a>' : ''}
+      </div>
+      <form class="filters" aria-label="Filtros de la agenda" onsubmit="return false">
+        <div class="field"><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="${view.fecha}"><div class="hint" id="fFechaTxt">${fLarga(view.fecha)}</div></div>
+        ${medFijo ? '' : `<div class="field"><label for="fMed">Médico</label><select id="fMed"><option value="todos">Todos</option>${MEDICOS.map(m => `<option value="${m.id}" ${String(m.id) === view.filtroMed ? 'selected' : ''}>${m.nombre}</option>`).join('')}</select></div>`}
+        <div class="field"><label for="fEst">Estado</label><select id="fEst">${['todos','pendiente','confirmada','cancelada'].map(e => `<option value="${e}" ${e === view.filtroEstado ? 'selected' : ''}>${e === 'todos' ? 'Todos' : e[0].toUpperCase() + e.slice(1)}</option>`).join('')}</select></div>
+      </form>
+      <div id="agendaBody" aria-live="polite"></div>`;
+    const body = $('#agendaBody');
+    if (!lista.length) {
+      body.innerHTML = `<div class="card"><h2>No hay citas ${view.filtroEstado !== 'todos' ? view.filtroEstado + 's ' : ''}para ${fCorta(view.fecha)}</h2>
+        <p class="muted">${p.crear ? 'Puede agendar una nueva cita o cambiar la fecha.' : 'Cambie la fecha o el filtro de estado.'}</p>
+        ${p.crear ? '<a class="btn primary" href="#/nueva/1">+ Nueva cita</a>' : ''}</div>`;
+    } else {
+      body.innerHTML = `
+        <table class="agenda"><caption class="sr-only">Citas de ${fLarga(view.fecha)}</caption>
+          <thead><tr><th scope="col">Hora</th><th scope="col">Paciente</th><th scope="col">Médico</th><th scope="col">Estado</th><th scope="col"><span class="sr-only">Acción</span></th></tr></thead>
+          <tbody>${lista.map(c => `<tr class="${c.id === view.resaltada ? 'nueva' : ''}"><td>${c.hora}</td><td>${esc(pac(c.pac).corto)}</td><td>${esc(med(c.med).nombre)}</td><td>${ESTADO[c.estado]}</td><td><a href="#/cita/${c.id}">Ver detalle<span class="sr-only"> de la cita de las ${c.hora}</span></a></td></tr>`).join('')}</tbody>
+        </table>
+        <ul class="cards" aria-label="Citas de ${fLarga(view.fecha)}">${lista.map(c => `<li class="${c.id === view.resaltada ? 'nueva' : ''}"><span class="hora">${c.hora}</span>${ESTADO[c.estado]}<span>${esc(pac(c.pac).corto)}</span><span class="muted small">${esc(med(c.med).nombre)}</span><a class="btn secondary ver" href="#/cita/${c.id}">Ver detalle<span class="sr-only"> de la cita de las ${c.hora}</span></a></li>`).join('')}</ul>`;
+    }
+    $('#fFecha').onchange = (e) => { if (e.target.value) { view.fecha = e.target.value; renderAgenda(); $('#fFecha').focus(); } };
+    if ($('#fMed')) $('#fMed').onchange = (e) => { view.filtroMed = e.target.value; renderAgenda(); $('#fMed').focus(); };
+    $('#fEst').onchange = (e) => { view.filtroEstado = e.target.value; renderAgenda(); $('#fEst').focus(); };
+    if (exito) {
+      $('#okCerrar').onclick = () => { view.exito = null; renderAgenda(); setTitle(titulo); };
+      $('#okVer').onclick = () => go('#/cita/' + exito.id);
+      if ($('#okOtra')) $('#okOtra').onclick = () => { view.exito = null; go('#/nueva/1'); };
+      setTitle('Cita agendada', false); $('#okPanel').focus();
+    } else setTitle(titulo);
+  }
+
+  // ---------- Asistente de nueva cita (W2–W4) ----------
+  const PASOS = ['Paciente', 'Médico y fecha', 'Horario', 'Revisar y agendar'];
+  function stepper(n) {
+    return `<ol class="steps" aria-label="Pasos para agendar">${PASOS.map((t, i) => `<li class="${i + 1 < n ? 'done' : ''}" ${i + 1 === n ? 'aria-current="step"' : ''}>${i + 1 < n ? `<a href="#/nueva/${i + 1}">${i + 1}. ${t}</a>` : `${i + 1}. ${t}`}</li>`).join('')}</ol>
+      <div class="progress-m"><span class="small"><b>Paso ${n} de 4</b> · ${PASOS[n - 1]}</span><div class="bar"><span style="width:${n * 25}%"></span></div></div>`;
+  }
+  function contexto() {
+    const parts = [];
+    if (draft.pac) parts.push(esc(pac(draft.pac).nombre));
+    if (draft.med) parts.push(esc(med(draft.med).nombre));
+    if (draft.hora) parts.push(`${fCorta(draft.fecha)}, ${draft.hora}`);
+    return parts.length ? `<p class="small muted" style="margin:-4px 0 12px">${parts.join(' · ')}</p>` : '';
+  }
+  function renderPaso(n) {
+    if (!draft.key) draft.key = uuid();
+    if (n === 1) paso1(); else if (n === 2) paso2(); else if (n === 3) paso3(); else paso4();
+  }
+
+  function paso1() {
+    main.innerHTML = `${stepper(1)}<h1>¿Para qué paciente es la cita?</h1>
+      <div class="card">
+        <div class="field"><label for="qPac">Buscar paciente <span class="req">(obligatorio)</span></label>
+          <input type="search" id="qPac" autocomplete="off" aria-describedby="qPacHint" aria-controls="resPac" placeholder="Ej.: Pérez, 10-4471 o 5521">
+          <div class="hint" id="qPacHint">Nombre, No. de expediente o últimos 4 dígitos del DPI. Mínimo 3 caracteres.</div></div>
+        <div id="resPac" aria-live="polite"></div>
+      </div>
+      <div class="actions sticky"><a class="btn secondary" href="#/agenda">Salir</a><button class="btn primary" id="n1" ${draft.pac ? '' : 'disabled'}>Continuar</button></div>`;
+    const q = $('#qPac'), res = $('#resPac');
+    const pintar = () => {
+      const t = q.value.trim().toLowerCase();
+      if (draft.pac && !t) { res.innerHTML = `<p><b>Seleccionado:</b> ${esc(pac(draft.pac).nombre)} · Exp. ${pac(draft.pac).exp} · DPI ****${pac(draft.pac).dpi}</p>`; return; }
+      if (t.length < 3) { res.innerHTML = ''; return; }
+      const r = PACIENTES.filter(p => p.nombre.toLowerCase().includes(t) || p.exp.includes(t) || p.dpi.includes(t));
+      if (!r.length) { res.innerHTML = `<div class="alert info"><h3>No encontramos a "${esc(q.value)}"</h3><p>Verifique el dato. Si el paciente es nuevo, regístrelo primero en el módulo Pacientes.</p></div>`; return; }
+      res.innerHTML = `<fieldset style="border:0;padding:0;margin:0"><legend class="small muted">${r.length} resultado${r.length > 1 ? 's' : ''}</legend>${r.map(p => `<label style="display:flex;gap:10px;align-items:center;min-height:44px;border-bottom:1px solid var(--line)"><input type="radio" name="pac" value="${p.id}" ${draft.pac === p.id ? 'checked' : ''}> <span>${esc(p.nombre)} <span class="muted small">· Exp. ${p.exp} · DPI ****${p.dpi}</span></span></label>`).join('')}</fieldset>`;
+      res.querySelectorAll('input[name=pac]').forEach(i => i.onchange = () => { draft.pac = Number(i.value); $('#n1').disabled = false; });
+    };
+    q.oninput = pintar; pintar();
+    $('#n1').onclick = () => go('#/nueva/2');
+    setTitle('Paso 1 de 4, paciente');
+  }
+
+  function paso2() {
+    const hoy = iso(HOY);
+    main.innerHTML = `${stepper(2)}<h1>Médico y fecha</h1>${contexto()}
+      <form class="card" id="f2" novalidate>
+        <div class="fields3">
+          <div class="field"><label for="esp">Especialidad <span class="req">(obligatorio)</span></label><select id="esp"><option value="">Elija una</option>${ESPECIALIDADES.map(e => `<option ${e === draft.esp ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
+          <div class="field"><label for="medS">Médico <span class="req">(obligatorio)</span></label><select id="medS" aria-describedby="medHint" ${draft.esp ? '' : 'disabled'}></select><div class="hint" id="medHint">Solo médicos de la especialidad elegida.</div></div>
+          <div class="field"><label for="fec">Fecha <span class="req">(obligatorio)</span></label><input type="date" id="fec" min="${hoy}" value="${draft.fecha}" aria-describedby="fecTxt"><div class="hint" id="fecTxt">${fLarga(draft.fecha)}</div></div>
+          <div class="field"><label for="dur">Duración</label><select id="dur">${[15, 30, 45, 60].map(d => `<option value="${d}" ${d === draft.dur ? 'selected' : ''}>${d} minutos</option>`).join('')}</select></div>
+        </div>
+      </form>
+      <div class="actions sticky"><a class="btn secondary" href="#/nueva/1">Atrás</a><button class="btn primary" id="n2">Ver horarios</button></div>`;
+    const esp = $('#esp'), ms = $('#medS');
+    const llenar = () => {
+      const l = MEDICOS.filter(m => m.esp === esp.value);
+      ms.innerHTML = '<option value="">Elija uno</option>' + l.map(m => `<option value="${m.id}" ${m.id === draft.med ? 'selected' : ''}>${m.nombre}</option>`).join('');
+      ms.disabled = !esp.value;
+    };
+    llenar();
+    const ok = () => { $('#n2').disabled = !(esp.value && ms.value && $('#fec').value); };
+    esp.onchange = () => { draft.esp = esp.value; draft.med = null; draft.hora = null; llenar(); ok(); };
+    ms.onchange = () => { draft.med = Number(ms.value) || null; draft.hora = null; ok(); };
+    $('#fec').onchange = (e) => { if (e.target.value < hoy) e.target.value = hoy; draft.fecha = e.target.value; draft.hora = null; $('#fecTxt').textContent = fLarga(draft.fecha); ok(); };
+    $('#dur').onchange = (e) => { draft.dur = Number(e.target.value); };
+    ok();
+    $('#n2').onclick = () => go('#/nueva/3');
+    setTitle('Paso 2 de 4, médico y fecha');
+  }
+
+  async function paso3() {
+    const m = med(draft.med);
+    main.innerHTML = `${stepper(3)}<h1>Elija un horario</h1>${contexto()}
+      <div id="alerta409"></div>
+      <div class="card">
+        <div class="row between"><h2 id="slotsT">${esc(m.nombre)} · ${fLarga(draft.fecha)}</h2>
+          <button class="btn link" id="btnAyuda" aria-expanded="false" aria-controls="ayuda">¿Por qué no veo un horario?</button></div>
+        <div id="ayuda" class="alert info help-box" hidden><p>Solo se muestran horarios dentro de la jornada del médico. Los marcados como <b>Ocupado</b> ya tienen una cita pendiente o confirmada. Consultar no reserva el horario.</p></div>
+        <p class="small muted" id="slotsHint">Horarios de ${draft.dur} minutos. Use las flechas para moverse y Espacio para elegir.</p>
+        <div id="slotsBox" aria-busy="true"><div class="slots">${'<div class="skel"></div>'.repeat(8)}</div><p class="sr-only" role="status">Cargando horarios</p></div>
+      </div>
+      <div class="actions sticky"><a class="btn secondary" href="#/nueva/2">Atrás</a><button class="btn primary" id="n3" ${draft.hora ? '' : 'disabled'}>Continuar</button></div>`;
+    $('#btnAyuda').onclick = (e) => { const a = $('#ayuda'); a.hidden = !a.hidden; e.target.setAttribute('aria-expanded', String(!a.hidden)); };
+    $('#n3').onclick = () => go('#/nueva/4');
+    setTitle('Paso 3 de 4, horario', !draft.error);
+    if (draft.error === 'SLOT_TAKEN') {
+      $('#alerta409').innerHTML = `<div class="alert error" role="alert" tabindex="-1" id="a409">
+        <h2>Otro usuario acaba de reservar las ${draft.recien}</h2>
+        <p>Elija otro horario. Paciente, médico y motivo se conservaron.</p></div>`;
+      $('#a409').focus();
+    }
+    await sleep(600);
+    if (!document.body.contains($('#slotsBox'))) return;
+    const lista = libres(draft.med, draft.fecha);
+    const box = $('#slotsBox'); box.setAttribute('aria-busy', 'false');
+    if (!lista.some(s => s.libre)) {
+      let sig = draft.fecha, n = 0;
+      for (let i = 1; i <= 14; i++) { const f = addDays(draft.fecha, i); const c = libres(draft.med, f).filter(s => s.libre).length; if (c) { sig = f; n = c; break; } }
+      box.innerHTML = `<div class="alert info"><h3>Sin horarios libres ${fCorta(draft.fecha)}</h3><p>${esc(m.nombre)} no tiene horarios disponibles ese día.</p>
+        <button class="btn primary" id="btnSig">Ver ${fCorta(sig)} (${n} libres)</button></div>`;
+      $('#btnSig').onclick = () => { draft.fecha = sig; paso3(); };
+      return;
+    }
+    const grupo = (t, arr) => arr.length ? `<h3 class="slots-h" id="g${t}">${t}</h3><div class="slots">${arr.map(s => {
+      const rec = s.h === draft.recien;
+      return `<button type="button" role="radio" class="slot ${rec ? 'recien' : ''}" data-h="${s.h}" aria-checked="${s.h === draft.hora}" ${s.libre ? '' : 'aria-disabled="true"'} tabindex="-1"><span class="t">${s.h}</span>${s.libre ? '' : `<span class="s">${rec ? 'Recién ocupado' : 'Ocupado'}</span>`}</button>`;
+    }).join('')}</div>` : '';
+    box.innerHTML = `<div role="radiogroup" aria-labelledby="slotsT" aria-describedby="slotsHint" id="rg">${grupo('Mañana', lista.filter(s => s.h < '12:00'))}${grupo('Tarde', lista.filter(s => s.h >= '12:00'))}</div>
+      <p class="small muted" style="margin-top:10px">${lista.filter(s => s.libre).length} de ${lista.length} horarios libres.</p>`;
+    // Patrón radiogroup con tabindex móvil (H-03)
+    const btns = [...box.querySelectorAll('.slot')];
+    const libresB = btns.filter(b => b.getAttribute('aria-disabled') !== 'true');
+    const inicial = libresB.find(b => b.dataset.h === draft.hora) || libresB[0];
+    inicial.tabIndex = 0;
+    const elegir = (b) => {
+      if (b.getAttribute('aria-disabled') === 'true') return;
+      btns.forEach(x => { x.setAttribute('aria-checked', 'false'); x.tabIndex = -1; });
+      b.setAttribute('aria-checked', 'true'); b.tabIndex = 0; b.focus();
+      draft.hora = b.dataset.h; $('#n3').disabled = false;
+    };
+    btns.forEach(b => {
+      b.onclick = () => elegir(b);
+      b.onkeydown = (e) => {
+        const i = libresB.indexOf(document.activeElement);
+        let j = null;
+        if (['ArrowRight', 'ArrowDown'].includes(e.key)) j = (i + 1) % libresB.length;
+        if (['ArrowLeft', 'ArrowUp'].includes(e.key)) j = (i - 1 + libresB.length) % libresB.length;
+        if (e.key === 'Home') j = 0;
+        if (e.key === 'End') j = libresB.length - 1;
+        if (j !== null) { e.preventDefault(); elegir(libresB[j]); }
+      };
+    });
+  }
+
+  function paso4() {
+    const p = pac(draft.pac), m = med(draft.med);
+    main.innerHTML = `${stepper(4)}<h1>Revise y agende</h1>
+      <div id="alerta4"></div>
+      <div class="card">
+        <dl class="summary">
+          <dt>Paciente</dt><dd>${esc(p.nombre)} · Exp. ${p.exp} <a href="#/nueva/1" class="small">Cambiar<span class="sr-only"> paciente</span></a></dd>
+          <dt>Médico</dt><dd>${esc(m.nombre)} · ${esc(m.esp)} <a href="#/nueva/2" class="small">Cambiar<span class="sr-only"> médico</span></a></dd>
+          <dt>Fecha y hora</dt><dd>${fLarga(draft.fecha)}, ${draft.hora} a ${fin(draft.hora, draft.dur)} <a href="#/nueva/3" class="small">Cambiar<span class="sr-only"> horario</span></a></dd>
+        </dl>
+        <div class="field"><label for="motivo">Motivo de la consulta <span class="req">(opcional)</span></label>
+          <textarea id="motivo" maxlength="500" aria-describedby="motivoHint motivoCount">${esc(draft.motivo)}</textarea>
+          <div class="hint" id="motivoHint">Hasta 500 caracteres. Solo lo verán el personal y el médico en el detalle de la cita.</div>
+          <div class="hint" id="motivoCount" aria-live="polite">${draft.motivo.length}/500</div></div>
+        <p class="small muted">La cita se crea <b>pendiente</b> hasta que Enfermería confirme la asistencia.</p>
+      </div>
+      <div class="actions sticky"><a class="btn secondary" href="#/nueva/3">Atrás</a><button class="btn primary" id="n4">Agendar cita</button></div>`;
+    const t = $('#motivo');
+    t.oninput = () => { draft.motivo = t.value; $('#motivoCount').textContent = t.value.length + '/500'; };
+    const btn = $('#n4');
+    btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = 'Agendando…';
+      $('#alerta4').innerHTML = '';
+      try {
+        const r = await apiCrear({ pac: draft.pac, med: draft.med, fecha: draft.fecha, hora: draft.hora, motivo: draft.motivo.trim(), key: draft.key });
+        if (r.status === 201) {
+          view.exito = r.cita.id; view.resaltada = r.cita.id; view.fecha = r.cita.fecha; view.filtroEstado = 'todos'; view.filtroMed = 'todos';
+          resetDraft(); go('#/agenda');
+        } else if (r.status === 409) {
+          draft.recien = draft.hora; draft.hora = null; draft.error = 'SLOT_TAKEN';
+          go('#/nueva/3');
+        }
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Reintentar';
+        $('#alerta4').innerHTML = `<div class="alert error" role="alert" tabindex="-1" id="aNet"><h2>No pudimos confirmar el registro</h2>
+          <p>Revise la conexión y pulse <b>Reintentar</b>. Si la cita ya se había guardado, no se duplicará.</p></div>`;
+        $('#aNet').focus();
+      }
+    };
+    setTitle('Paso 4 de 4, revisar y agendar');
+    draft.error = null;
+  }
+
+  // ---------- Detalle (W6) ----------
+  let origenFoco = null;
+  function renderDetalle(id, aviso) {
+    const c = citas.find(x => x.id === id);
+    if (!c || (rol() === 'medico' && c.med !== 1)) {
+      main.innerHTML = '<h1>Cita no encontrada</h1><p>La cita no existe o no pertenece a su agenda.</p><a class="btn secondary" href="#/agenda">Volver a la agenda</a>';
+      return setTitle('Cita no encontrada');
+    }
+    const p = pac(c.pac), m = med(c.med), perm = PERM[rol()];
+    const abierta = c.estado !== 'cancelada';
+    main.innerHTML = `<p><a href="#/agenda">‹ Volver a la agenda</a></p>
+      <div id="aviso">${aviso || ''}</div>
+      <div class="row"><h1 style="margin:0">Cita ${codigo(c.id)}</h1>${ESTADO[c.estado]}</div>
+      <div class="card" style="margin-top:12px">
+        <dl class="summary">
+          <dt>Paciente</dt><dd>${esc(p.nombre)} · Exp. ${p.exp}</dd>
+          <dt>Médico</dt><dd>${esc(m.nombre)} · ${esc(m.esp)}</dd>
+          <dt>Fecha y hora</dt><dd>${fLarga(c.fecha)}, ${c.hora}</dd>
+          <dt>Motivo</dt><dd>${c.motivo ? esc(c.motivo) : 'No indicado'}</dd>
+          ${c.canal ? `<dt>Confirmada por</dt><dd>${esc(c.canal)}</dd>` : ''}
+          ${c.motivoCancel ? `<dt>Motivo de cancelación</dt><dd>${esc(c.motivoCancel)}</dd>` : ''}
+        </dl>
+      </div>
+      ${abierta && (perm.confirmar || perm.cancelar) ? `<div class="actions sticky">
+        ${perm.cancelar ? '<button class="btn secondary" id="bCancelar">Cancelar cita</button>' : ''}
+        ${perm.confirmar && c.estado === 'pendiente' ? '<button class="btn primary" id="bConfirmar">Confirmar asistencia</button>' : ''}
+      </div>` : ''}
+      ${rol() === 'medico' ? '<p class="small muted">Vista de solo lectura. Los cambios de agenda los gestiona Recepción.</p>' : ''}`;
+    const info = `${esc(p.nombre)} · ${fCorta(c.fecha)}, ${c.hora} · ${esc(m.nombre)}`;
+    if ($('#bCancelar')) $('#bCancelar').onclick = (e) => {
+      origenFoco = e.currentTarget.id;
+      $('#dlgCancelInfo').innerHTML = info; $('#reasonCancel').value = ''; $('#reasonCancelErr').hidden = true; $('#reasonCancel').removeAttribute('aria-invalid');
+      $('#dlgCancel').dataset.id = c.id; $('#dlgCancel').showModal(); $('#reasonCancel').focus();
+    };
+    if ($('#bConfirmar')) $('#bConfirmar').onclick = (e) => {
+      origenFoco = e.currentTarget.id;
+      $('#dlgConfirmInfo').innerHTML = info; $('#dlgConfirm').dataset.id = c.id; $('#dlgConfirm').showModal();
+      $('#dlgConfirm input[name=canal]:checked').focus();
+    };
+    setTitle('Cita ' + codigo(c.id), !aviso);
+    if (aviso) $('#aviso .alert').focus();
+  }
+  function avisoHtml(tipo, titulo, texto) {
+    return `<div class="alert ${tipo}" ${tipo === 'error' ? 'role="alert"' : 'role="status"'} tabindex="-1"><h2>${titulo}</h2>${texto ? `<p>${texto}</p>` : ''}</div>`;
+  }
+  // Diálogo de cancelación (H-06, H-09): foco inicial, Escape, retorno de foco
+  $('#btnKeep').onclick = () => $('#dlgCancel').close('keep');
+  $('#dlgCancel').addEventListener('close', () => { if ($('#dlgCancel').returnValue !== 'done' && origenFoco && $('#' + origenFoco)) $('#' + origenFoco).focus(); $('#dlgCancel').returnValue = ''; });
+  $('#formCancel').onsubmit = async (e) => {
+    e.preventDefault();
+    const t = $('#reasonCancel'), er = $('#reasonCancelErr');
+    if (t.value.trim().length < 3) { er.hidden = false; er.textContent = 'Escriba el motivo de la cancelación: al menos 3 caracteres.'; t.setAttribute('aria-invalid', 'true'); t.focus(); return; }
+    const b = $('#btnDoCancel'); b.disabled = true; b.textContent = 'Cancelando…';
+    const id = Number($('#dlgCancel').dataset.id);
+    try {
+      const r = await apiCambiar(id, 'cancelada');
+      $('#dlgCancel').close('done');
+      if (r.status === 200) { r.cita.motivoCancel = t.value.trim(); renderDetalle(id, avisoHtml('ok', 'Cita cancelada', 'El horario quedó libre para otro paciente.')); }
+      else renderDetalle(id, avisoHtml('error', 'Esta cita ya fue cancelada o confirmada por otra persona', 'Se muestra su estado actual.'));
+    } catch (_) {
+      er.hidden = false; er.textContent = 'Sin conexión: no se canceló la cita. Reintente al reconectar; el motivo se conserva.';
+      $('#btnDoCancel').focus();
+    } finally { b.disabled = false; b.textContent = 'Sí, cancelar cita'; }
+  };
+  $('#btnConfirmBack').onclick = () => $('#dlgConfirm').close('keep');
+  $('#dlgConfirm').addEventListener('close', () => { if ($('#dlgConfirm').returnValue !== 'done' && origenFoco && $('#' + origenFoco)) $('#' + origenFoco).focus(); $('#dlgConfirm').returnValue = ''; });
+  $('#formConfirm').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = Number($('#dlgConfirm').dataset.id), canal = $('#dlgConfirm input[name=canal]:checked').value;
+    try {
+      const r = await apiCambiar(id, 'confirmada');
+      $('#dlgConfirm').close('done');
+      if (r.status === 200) { r.cita.canal = canal; renderDetalle(id, avisoHtml('ok', 'Asistencia confirmada', `Medio de contacto: ${canal}.`)); }
+      else renderDetalle(id, avisoHtml('error', 'Esta cita ya fue cancelada o confirmada por otra persona', 'Se muestra su estado actual.'));
+    } catch (_) {
+      $('#dlgConfirm').close('done');
+      renderDetalle(id, avisoHtml('error', 'Sin conexión: la asistencia no se registró', 'Reintente al reconectar.'));
+    }
+  };
+
+  // ---------- Controles del prototipo ----------
+  $('#role').onchange = () => { view._enf = false; view.filtroEstado = 'todos'; view.exito = null; if (location.hash.startsWith('#/nueva') && !PERM[rol()].crear) go('#/agenda'); else render(); };
+  $('#simOffline').onchange = (e) => { $('#offlineBar').hidden = !e.target.checked; };
+  const qs = new URLSearchParams(location.search);
+  if (window.matchMedia('(min-width: 600px)').matches || qs.get('demo') === '1') $('#demoBox').open = true;
+  if (qs.get('rol') && PERM[qs.get('rol')]) $('#role').value = qs.get('rol');
+  if (qs.get('offline') === '1') { $('#demoBox').open = true; $('#simOffline').checked = true; $('#offlineBar').hidden = false; }
+  render();
+})();
+</script>
+</body>
+</html>
