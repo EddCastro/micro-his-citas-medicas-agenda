@@ -1,0 +1,37 @@
+@startuml
+title User flow - Cancelacion (Recepcionista) y consulta (Medico)
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #F2F2F2
+
+|Recepcionista|
+start
+:Abre la cita desde la agenda (W1 -> W6);
+:Pulsa "Cancelar cita";
+:Dialogo de cancelacion (W6)\nmotivo obligatorio;
+if (Motivo con 5 a 250 caracteres?) then (si)
+  :Confirma "Si, cancelar cita";
+  if (Respuesta 200?) then (si)
+    :Estado CANCELADA\nEl horario vuelve a quedar libre;
+  else (422 ya cancelada)
+    :"La cita ya estaba cancelada"\nse recarga el detalle;
+  endif
+else (no)
+  :Error en linea bajo el campo motivo;
+endif
+stop
+
+|Medico|
+start
+:Inicio: "Mi agenda" (W1) en solo lectura;
+:Ve sus citas del dia con estado en texto;
+:Abre detalle: ve motivo de consulta;
+note right
+Sin botones Agendar, Confirmar
+ni Cancelar: la ocupacion de su
+horario la gobierna Recepcion.
+end note
+stop
+@enduml

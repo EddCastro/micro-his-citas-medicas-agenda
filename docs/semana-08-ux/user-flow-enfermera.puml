@@ -1,0 +1,28 @@
+@startuml
+title User flow - Enfermera\nConfirmar asistencia de una cita pendiente
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #F2F2F2
+
+start
+:Inicio: Agenda (W1) filtrada por "Pendientes";
+note right: Vacio: "No hay citas pendientes de confirmar"
+:Abre el detalle de una cita (W6);
+:Contacta al paciente fuera del sistema;
+if (Paciente asistira?) then (si)
+  :Pulsa "Confirmar asistencia";
+  :Elige medio de contacto (telefono, correo, presencial);
+  switch (Respuesta)
+  case (200)
+    :Estado cambia a CONFIRMADA\nMensaje persistente en la tarjeta;
+  case (422 TRANSICION INVALIDA)
+    :"Esta cita ya fue cancelada o confirmada por otra persona"\nSe recarga el detalle;
+  endswitch
+else (no)
+  :No puede cancelar (permiso de Recepcion);
+  :Registra nota "Paciente no asistira"\ny avisa a Recepcion;
+endif
+stop
+@enduml
