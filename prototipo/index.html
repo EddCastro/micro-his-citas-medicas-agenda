@@ -207,8 +207,8 @@
     <p id="dlgCancelInfo"></p>
     <div class="field">
       <label for="reasonCancel">Motivo de la cancelación <span class="req">(obligatorio)</span></label>
-      <textarea id="reasonCancel" maxlength="250" aria-describedby="reasonCancelHint reasonCancelErr"></textarea>
-      <div class="hint" id="reasonCancelHint">Entre 5 y 250 caracteres. El horario quedará libre para otro paciente.</div>
+      <textarea id="reasonCancel" maxlength="500" aria-describedby="reasonCancelHint reasonCancelErr"></textarea>
+      <div class="hint" id="reasonCancelHint">Entre 3 y 500 caracteres. El horario quedará libre para otro paciente.</div>
       <div class="err" id="reasonCancelErr" hidden></div>
     </div>
     <div class="actions">
@@ -554,24 +554,17 @@
           <dt>Médico</dt><dd>${esc(m.nombre)} · ${esc(m.esp)} <a href="#/nueva/2" class="small">Cambiar<span class="sr-only"> médico</span></a></dd>
           <dt>Fecha y hora</dt><dd>${fLarga(draft.fecha)}, ${draft.hora} a ${fin(draft.hora, draft.dur)} <a href="#/nueva/3" class="small">Cambiar<span class="sr-only"> horario</span></a></dd>
         </dl>
-        <div class="field"><label for="motivo">Motivo de la consulta <span class="req">(obligatorio)</span></label>
-          <textarea id="motivo" maxlength="250" aria-describedby="motivoHint motivoErr">${esc(draft.motivo)}</textarea>
-          <div class="hint" id="motivoHint">Entre 5 y 250 caracteres. Solo lo verán el personal y el médico en el detalle de la cita.</div>
-          <div class="err" id="motivoErr" hidden></div></div>
+        <div class="field"><label for="motivo">Motivo de la consulta <span class="req">(opcional)</span></label>
+          <textarea id="motivo" maxlength="500" aria-describedby="motivoHint motivoCount">${esc(draft.motivo)}</textarea>
+          <div class="hint" id="motivoHint">Hasta 500 caracteres. Solo lo verán el personal y el médico en el detalle de la cita.</div>
+          <div class="hint" id="motivoCount" aria-live="polite">${draft.motivo.length}/500</div></div>
         <p class="small muted">La cita se crea <b>pendiente</b> hasta que Enfermería confirme la asistencia.</p>
       </div>
       <div class="actions sticky"><a class="btn secondary" href="#/nueva/3">Atrás</a><button class="btn primary" id="n4">Agendar cita</button></div>`;
-    const t = $('#motivo'), err = $('#motivoErr');
-    const validar = () => {
-      const v = t.value.trim(); draft.motivo = t.value;
-      if (v.length < 5) { err.hidden = false; err.textContent = 'Escriba el motivo de la consulta: al menos 5 caracteres.'; t.setAttribute('aria-invalid', 'true'); return false; }
-      err.hidden = true; t.removeAttribute('aria-invalid'); return true;
-    };
-    t.onblur = () => { if (t.value) validar(); };
-    t.oninput = () => { draft.motivo = t.value; if (t.getAttribute('aria-invalid')) validar(); };
+    const t = $('#motivo');
+    t.oninput = () => { draft.motivo = t.value; $('#motivoCount').textContent = t.value.length + '/500'; };
     const btn = $('#n4');
     btn.onclick = async () => {
-      if (!validar()) { t.focus(); return; }
       btn.disabled = true; btn.textContent = 'Agendando…';
       $('#alerta4').innerHTML = '';
       try {
@@ -612,7 +605,7 @@
           <dt>Paciente</dt><dd>${esc(p.nombre)} · Exp. ${p.exp}</dd>
           <dt>Médico</dt><dd>${esc(m.nombre)} · ${esc(m.esp)}</dd>
           <dt>Fecha y hora</dt><dd>${fLarga(c.fecha)}, ${c.hora}</dd>
-          <dt>Motivo</dt><dd>${esc(c.motivo)}</dd>
+          <dt>Motivo</dt><dd>${c.motivo ? esc(c.motivo) : 'No indicado'}</dd>
           ${c.canal ? `<dt>Confirmada por</dt><dd>${esc(c.canal)}</dd>` : ''}
           ${c.motivoCancel ? `<dt>Motivo de cancelación</dt><dd>${esc(c.motivoCancel)}</dd>` : ''}
         </dl>
@@ -645,7 +638,7 @@
   $('#formCancel').onsubmit = async (e) => {
     e.preventDefault();
     const t = $('#reasonCancel'), er = $('#reasonCancelErr');
-    if (t.value.trim().length < 5) { er.hidden = false; er.textContent = 'Escriba el motivo de la cancelación: al menos 5 caracteres.'; t.setAttribute('aria-invalid', 'true'); t.focus(); return; }
+    if (t.value.trim().length < 3) { er.hidden = false; er.textContent = 'Escriba el motivo de la cancelación: al menos 3 caracteres.'; t.setAttribute('aria-invalid', 'true'); t.focus(); return; }
     const b = $('#btnDoCancel'); b.disabled = true; b.textContent = 'Cancelando…';
     const id = Number($('#dlgCancel').dataset.id);
     try {
