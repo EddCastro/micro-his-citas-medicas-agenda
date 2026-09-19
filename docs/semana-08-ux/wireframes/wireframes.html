@@ -160,7 +160,7 @@
   </div>
   <div class="notes"><h3>Anotaciones</h3><ol>
     <li><b class="n">1</b><span><b>Ayuda contextual.</b> "¿Por qué no veo un horario?": fuera de jornada del médico u ocupado por otra cita.</span></li>
-    <li><b class="n">2</b><span><b>Grilla.</b> Datos de <code>QueryAvailability</code> (misma <code>SlotPolicy</code> que valida al guardar). Libre: borde oscuro. Ocupado: gris claro, no seleccionable. Seleccionado: relleno oscuro.</span></li>
+    <li><b class="n">2</b><span><b>Grilla.</b> Horarios libres según la jornada (ASII-04, dependencia declarada en la semana 7); la validación definitiva la hace <code>RequestAppointment</code> al guardar. Libre: borde oscuro. Ocupado: gris claro, no seleccionable. Seleccionado: relleno oscuro.</span></li>
     <li><b class="n">3</b><span><b>Carga.</b> Esqueleto de la grilla. Consultar no reserva el horario.</span></li>
     <li><b class="n">4</b><span><b>Vacío.</b> Se ofrece la siguiente fecha con horarios en lugar de un callejón sin salida.</span></li>
     <li><b class="n">·</b><span><b>Concurrencia.</b> La grilla es una foto del momento: si otro usuario toma el horario antes de confirmar, el paso 4 lo informa (W4) y se regresa aquí.</span></li>
