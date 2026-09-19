@@ -1,0 +1,53 @@
+@startuml
+title ANTES - Punto de mayor acoplamiento: validacion de disponibilidad
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam classAttributeIconSize 0
+hide empty members
+
+class RequestAppointment <<Application>> {
+  +execute(patientId, doctorId, scheduledAt, duration): int
+}
+
+interface AvailabilityRepository <<Domain>> {
+  +isAvailable(doctorId, scheduledAt, duration): bool
+}
+
+class PdoAvailabilityRepository <<Persistence>> {
+  +isAvailable(...): bool
+  -- mezcla --
+  1. consulta jornada (doctor_availability)
+  2. regla de cruce escrita en SQL
+  3. excluye canceladas (regla de estado)
+  4. bloqueo solo si DB::transactionLevel() > 0
+}
+
+class AppointmentRepository <<Domain>> {
+  +save(Appointment): int
+}
+
+class "UI (formulario)" as UI <<Frontend>> {
+  calcula horarios libres por su cuenta
+  muestra un solo mensaje de error
+}
+
+RequestAppointment ..> AvailabilityRepository : 1) pregunta
+RequestAppointment ..> AppointmentRepository : 2) escribe
+PdoAvailabilityRepository ..|> AvailabilityRepository
+UI ..> RequestAppointment : POST /appointments
+
+note right of AvailabilityRepository
+Devuelve bool: "fuera de jornada" y
+"horario ocupado" llegan al usuario
+como el mismo error.
+end note
+
+note bottom of RequestAppointment
+Pregunta y escritura son dos llamadas
+separadas: la atomicidad depende de que
+alguien, fuera del caso de uso, haya
+abierto una transaccion.
+end note
+
+@enduml
