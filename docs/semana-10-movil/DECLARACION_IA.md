@@ -54,6 +54,8 @@ corresponden al estudiante.
 | El botón deshabilitado se veía azul oscuro cuando el cursor quedaba encima, porque el estilo `:hover` del botón primario tenía más prioridad. | Se agregó `.btn[disabled]:hover` y se regeneraron las pantallas. |
 | En móvil, los controles del prototipo ocupaban casi un tercio de la pantalla. | Se volvieron plegables (`<details>`) y quedan cerrados por debajo de 600 px. |
 
+| El prototipo exigía el motivo de la consulta y pedía 5–250 caracteres para cancelar, reglas distintas a las del backend. | Se alinearon con `StoreAppointmentRequest` y `CancelAppointmentRequest`: motivo de consulta opcional con contador hasta 500; cancelación de 3 a 500 caracteres. |
+
 ## Validación humana
 
 El estudiante revisó las pantallas en los tres anchos, comprobó que no haya desplazamiento horizontal a 320 px y verificó que el recorrido automatizado termine sin errores de JavaScript.
