@@ -11,7 +11,8 @@ start
 note right: Vacio: "No hay citas pendientes de confirmar"
 :Abre el detalle de una cita (W6);
 :Contacta al paciente fuera del sistema;
-if (Paciente asistira?) then (si)
+switch (Respuesta del paciente)
+case (Asistira)
   :Pulsa "Confirmar asistencia";
   :Elige medio de contacto (telefono, correo, presencial);
   switch (Respuesta)
@@ -20,9 +21,11 @@ if (Paciente asistira?) then (si)
   case (422 TRANSICION INVALIDA)
     :"Esta cita ya fue cancelada o confirmada por otra persona"\nSe recarga el detalle;
   endswitch
-else (no)
+case (No asistira)
   :No puede cancelar (permiso de Recepcion);
-  :Registra nota "Paciente no asistira"\ny avisa a Recepcion;
-endif
+  :Avisa a Recepcion, que cancela con motivo;
+case (No responde)
+  :La cita permanece PENDIENTE\n(EX-05 de la semana 1);
+endswitch
 stop
 @enduml
