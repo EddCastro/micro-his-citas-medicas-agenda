@@ -89,6 +89,6 @@ if __name__ == "__main__":
             out = os.path.join(RAIZ, "docs", "semana-11-prototipo", "capturas"); os.makedirs(out, exist_ok=True)
             for nombre in (["desktop", "movil"] if modo == "todo" else [modo]):
                 pg = b.new_page(viewport=TAM[nombre], device_scale_factor=1 if nombre == "desktop" else 2, locale="es-GT")
-                print(nombre, flujo(pg, out, nombre + "-"))
+                print(nombre, flujo(pg, out, nombre + "-", full=(nombre == "desktop")))
                 pg.close()
         b.close()

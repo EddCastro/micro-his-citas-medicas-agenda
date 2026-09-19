@@ -1,0 +1,58 @@
+@startuml
+title Mapa de navegacion del prototipo - ASII-05 Citas medicas y agenda
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #1F5F8B
+}
+hide empty description
+
+state "Agenda del dia\nruta #/agenda\n(inicio de todos los roles)" as Agenda
+state "Panel de exito\n(persistente, codigo CT-)" as Exito
+state "Detalle de cita\nruta #/cita/{id}" as Detalle
+state "Dialogo: Confirmar asistencia\n(Enfermera, Recepcion)" as DConf
+state "Dialogo: Cancelar cita\n(Recepcion; motivo obligatorio)" as DCan
+
+state "Nueva cita (solo Recepcion / Admin)" as Wizard {
+  state "Paso 1 Paciente\nruta #/nueva/1" as P1
+  state "Paso 2 Medico y fecha\nruta #/nueva/2" as P2
+  state "Paso 3 Horario\nruta #/nueva/3" as P3
+  state "Paso 4 Revisar y agendar\nruta #/nueva/4" as P4
+  state "Alerta 409\nhorario tomado" as E409 #FDECEC
+  state "Alerta sin conexion\nboton Reintentar" as ENet #FDECEC
+
+  P1 --> P2 : Continuar
+  P2 --> P3 : Ver horarios
+  P3 --> P4 : Continuar
+  P4 --> P3 : Atras / Cambiar horario
+  P3 --> P2 : Atras
+  P2 --> P1 : Atras
+  P4 --> P1 : Cambiar paciente
+  P4 --> P2 : Cambiar medico
+  P4 --> E409 : Agendar -> 409
+  E409 --> P3 : grilla recargada,\ndatos conservados
+  P4 --> ENet : Agendar sin red
+  ENet --> P4 : Reintentar\n(misma Idempotency-Key)
+}
+
+[*] --> Agenda
+Agenda --> P1 : boton "Nueva cita"
+P1 --> Agenda : Salir
+P4 --> Exito : Agendar -> 201
+Exito --> Agenda : Cerrar aviso
+Exito --> Detalle : Ver la cita
+Exito --> P1 : Agendar otra cita
+Agenda --> Detalle : Ver detalle
+Detalle --> Agenda : Volver a la agenda
+Detalle --> DConf : Confirmar asistencia
+Detalle --> DCan : Cancelar cita
+DConf --> Detalle : Volver / Confirmar -> estado Confirmada
+DCan --> Detalle : Volver sin cancelar (Esc)\nSi, cancelar -> estado Cancelada
+
+note right of Agenda
+Medico: "Mi agenda", solo lectura.
+Enfermera: filtro "Pendientes".
+end note
+@enduml
