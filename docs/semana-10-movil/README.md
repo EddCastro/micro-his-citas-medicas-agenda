@@ -8,6 +8,7 @@ Módulo **ASII-05 — Citas médicas y agenda**.
 | Código | 1890-23-16857 |
 | GitHub | EddCastro |
 | Correo | ecastrov5@miumg.edu.gt |
+| Issue | #5 |
 | Rama | `feature/week-10-movil` |
 
 ## Tarea
@@ -25,6 +26,7 @@ confirmaciones y recuperación ante conexión limitada.
 | Reglas de breakpoint | [`breakpoints.md`](breakpoints.md) |
 | Dos escenarios móviles con decisiones de contenido y error | [`escenarios-moviles.md`](escenarios-moviles.md) |
 | Fuente de las pantallas | [`prototipo/index.html`](../../prototipo/index.html) |
+| Guía de defensa oral | [`GUIA_DEFENSA_ORAL.md`](GUIA_DEFENSA_ORAL.md) |
 | Declaración de IA | [`DECLARACION_IA.md`](DECLARACION_IA.md) |
 
 ## Pantallas
@@ -55,6 +57,33 @@ confirmaciones y recuperación ante conexión limitada.
 | H-03 grilla sin teclado | P3 |
 | H-04 409 genérico y lejano | Escenario 1 |
 | H-06 "Cancelar" ambiguo | P5 |
+
+## Alcance de la entrega
+
+Incluye:
+
+- Cinco pantallas del flujo asignado en los anchos 320, 375 y 430 px.
+- Reglas de breakpoint y reglas que no cambian con el ancho.
+- Dos escenarios móviles con decisiones de contenido y de error.
+- Las cuatro correcciones P1 del backlog de la semana 9.
+
+No incluye:
+
+- Aplicación nativa ni instalación en el teléfono; el proyecto evalúa
+  NativePHP en un módulo aparte.
+- Funcionamiento sin conexión con envío diferido: agregaría sincronización y
+  conflictos fuera del alcance del módulo.
+- Integración con el backend Laravel; las pantallas usan datos ficticios.
+
+## Validación
+
+```powershell
+python prototipo/pruebas/recorrido.py movil
+```
+
+El recorrido completo terminó sin errores de JavaScript en los tres anchos
+(salida `375 []`, `320 []`, `430 []`) y a 320 px el documento no supera el
+ancho de la pantalla.
 
 ## Reproducir las pantallas
 
