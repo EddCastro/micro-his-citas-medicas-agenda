@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>ASII-05 Wireframes semana 8</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9e9e9; font-family: "DejaVu Sans", Arial, sans-serif; color: #222; font-size: 13px; }
+  .frame { width: 1240px; margin: 20px auto; background: #fff; border: 1px solid #999; display: grid; grid-template-columns: 860px 380px; }
+  .frame > header { grid-column: 1 / -1; padding: 10px 16px; background: #333; color: #fff; font-weight: bold; font-size: 14px; }
+  .screen { border-right: 1px dashed #999; padding: 0; min-height: 560px; }
+  .notes { padding: 14px 16px; background: #fafafa; }
+  .notes h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: #555; }
+  .notes ol { margin: 0; padding-left: 0; list-style: none; }
+  .notes li { margin: 0 0 9px; line-height: 1.35; display: grid; grid-template-columns: 26px 1fr; }
+  .notes li b.n, .mk { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: #d9480f; color: #fff; font-size: 11px; align-items: center; justify-content: center; font-weight: bold; }
+  .mk { position: absolute; top: -10px; left: -20px; z-index: 2; }
+  .rel { position: relative; }
+  .appbar { height: 44px; background: #d6d6d6; display: flex; align-items: center; padding: 0 14px; gap: 14px; }
+  .appbar .logo { width: 110px; height: 16px; background: #9a9a9a; }
+  .appbar .sp { flex: 1; }
+  .appbar .user { background: #bdbdbd; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+  .body { padding: 16px 20px; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  h2 { font-size: 14px; margin: 14px 0 8px; }
+  .btn { display: inline-block; border: 2px solid #444; padding: 7px 14px; border-radius: 4px; font-weight: bold; background: #fff; }
+  .btn.primary { background: #444; color: #fff; }
+  .btn.ghost { border-color: #aaa; color: #555; }
+  .btn.dis { background: #cfcfcf; border-color: #cfcfcf; color: #777; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .field { margin: 0 0 12px; }
+  .field label { display: block; font-weight: bold; margin-bottom: 4px; }
+  .field .req { color: #d00; }
+  .input { border: 1px solid #888; height: 32px; border-radius: 3px; padding: 6px 8px; color: #666; background: #fff; }
+  .input.err { border: 2px solid #b00; }
+  .help { font-size: 12px; color: #666; margin-top: 3px; }
+  .errtxt { font-size: 12px; color: #b00; margin-top: 3px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border-bottom: 1px solid #ccc; padding: 7px 6px; text-align: left; }
+  th { background: #efefef; font-size: 12px; }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; }
+  .d-p { background: #f0ad00; } .d-c { background: #2e9e44; } .d-x { background: #d9534f; }
+  .skel { background: repeating-linear-gradient(90deg,#e4e4e4 0 40%,#efefef 40% 100%); height: 14px; border-radius: 3px; }
+  .stepper { display: flex; gap: 6px; margin-bottom: 14px; }
+  .stepper span { flex: 1; text-align: center; padding: 6px; background: #eee; border-bottom: 3px solid #ccc; font-size: 12px; }
+  .stepper span.on { background: #ddd; border-color: #333; font-weight: bold; }
+  .grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+  .slot { border: 1px solid #555; text-align: center; padding: 8px 0; border-radius: 3px; background: #fff; font-weight: bold; }
+  .slot.busy { border-color: #e0e0e0; color: #bdbdbd; background: #fff; font-weight: normal; }
+  .slot.sel { background: #444; color: #fff; }
+  .box { border: 1px solid #aaa; border-radius: 4px; padding: 12px; }
+  .toast { position: absolute; right: 16px; top: 54px; width: 330px; padding: 10px 12px; border-radius: 4px; color: #fff; }
+  .toast.red { background: #b94a48; } .toast.green { background: #3c8d4f; }
+  .modal-bg { background: rgba(0,0,0,.35); position: absolute; inset: 44px 0 0 0; display: flex; align-items: center; justify-content: center; }
+  .modal { background: #fff; width: 470px; border-radius: 6px; padding: 16px 18px; border: 1px solid #555; }
+  .kv { display: grid; grid-template-columns: 130px 1fr; row-gap: 6px; margin-bottom: 10px; }
+  .kv b { color: #555; }
+  .tag { font-size: 11px; background: #eee; border: 1px solid #bbb; border-radius: 10px; padding: 2px 8px; }
+  .mini { font-size: 11px; color: #666; }
+  .side2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+</style>
+</head>
+<body>
+
+<!-- W1 -->
+<section class="frame" id="w1">
+  <header>W1 · Inicio — Agenda del día (Recepcionista / Enfermera / Médico)</header>
+  <div class="screen">
+    <div class="appbar"><div class="logo"></div><span>Citas médicas y agenda</span><div class="sp"></div><span class="user">Recepción · Hospital Central</span></div>
+    <div class="body">
+      <div class="row" style="justify-content:space-between">
+        <h1>Agenda del día</h1>
+        <span class="btn primary rel" id="w1-new"><i class="mk">1</i>+ Nueva cita</span>
+      </div>
+      <div class="row rel" style="margin-bottom:10px" id="w1-filters"><i class="mk">2</i>
+        <span class="input" style="width:170px">05/10/2026 ▾</span>
+        <span class="input" style="width:200px">Médico: Todos ▾</span>
+        <span class="input" style="width:160px">Estado: Todos ▾</span>
+      </div>
+      <div class="rel" id="w1-legend" style="margin:0 0 6px"><i class="mk">3</i>
+        <span class="mini"><span class="dot d-p"></span>&nbsp; <span class="dot d-c"></span>&nbsp; <span class="dot d-x"></span></span>
+      </div>
+      <table class="rel" id="w1-table">
+        <tr><th>Hora</th><th>Paciente</th><th>Médico</th><th>Estado</th><th></th></tr>
+        <tr><td>08:00</td><td>Ana L. P.</td><td>Dr. Ruiz</td><td><span class="dot d-c"></span></td><td>Ver ›</td></tr>
+        <tr><td>08:30</td><td>Carlos M. G.</td><td>Dr. Ruiz</td><td><span class="dot d-p"></span></td><td>Ver ›</td></tr>
+        <tr><td>09:00</td><td>Lucía T. R.</td><td>Dra. Solís</td><td><span class="dot d-x"></span></td><td>Ver ›</td></tr>
+        <tr><td>09:30</td><td>Mario A. C.</td><td>Dra. Solís</td><td><span class="dot d-p"></span></td><td>Ver ›</td></tr>
+      </table>
+      <div class="side2" style="margin-top:18px">
+        <div class="box rel" id="w1-loading"><i class="mk">4</i><b>Estado: cargando</b>
+          <div class="skel" style="margin:8px 0"></div><div class="skel" style="margin:8px 0"></div><div class="skel"></div></div>
+        <div class="box rel" id="w1-empty"><i class="mk">5</i><b>Estado: vacío</b>
+          <p style="margin:8px 0">No hay citas para este día.</p><span class="btn">+ Nueva cita</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><h3>Anotaciones</h3><ol>
+    <li><b class="n">1</b><span><b>Acción principal.</b> Visible solo para Recepcionista y Admin (permiso <code>appointments.create</code>). Médico y Enfermera no la ven.</span></li>
+    <li><b class="n">2</b><span><b>Filtros.</b> Fecha (hoy por defecto), médico y estado. La Enfermera entra con "Pendientes" preseleccionado. El Médico solo ve su propia agenda.</span></li>
+    <li><b class="n">3</b><span><b>Estados de la cita.</b> Pendiente (amarillo), confirmada (verde), cancelada (rojo).</span></li>
+    <li><b class="n">4</b><span><b>Carga.</b> Esqueleto de tres filas mientras responde <code>GET /appointments</code>. No se bloquea la barra superior.</span></li>
+    <li><b class="n">5</b><span><b>Vacío.</b> Mensaje + acción directa. Para Médico/Enfermera el vacío no muestra botón.</span></li>
+    <li><b class="n">·</b><span><b>Protección de datos.</b> La lista muestra nombre + iniciales de apellidos; no muestra motivo, teléfono ni DPI. El detalle completo requiere abrir la cita (queda en auditoría).</span></li>
+  </ol></div>
+</section>
+
+<!-- W2 -->
+<section class="frame" id="w2">
+  <header>W2 · Nueva cita — Pasos 1 y 2: paciente, especialidad, médico y fecha (Recepcionista)</header>
+  <div class="screen">
+    <div class="appbar"><div class="logo"></div><span>Citas médicas y agenda</span><div class="sp"></div><span class="user">Recepción · Hospital Central</span></div>
+    <div class="body">
+      <div class="stepper rel" id="w2-stepper"><i class="mk">1</i><span class="on">1 Paciente</span><span class="on">2 Médico y fecha</span><span>3 Horario</span><span>4 Confirmar</span></div>
+      <div class="field rel" id="w2-patient"><i class="mk">2</i><label>Paciente <span class="req">*</span></label>
+        <div class="input" style="width:420px">Buscar por nombre, DPI o No. de expediente</div>
+        <div class="box" style="width:420px;margin-top:4px;padding:6px 10px">Ana Lucía Pérez · Exp. 10-4471 · DPI ****5521 <span class="tag">Seleccionado</span></div>
+      </div>
+      <div class="row" style="gap:16px;align-items:flex-start">
+        <div class="field rel" id="w2-spec"><i class="mk">3</i><label>Especialidad <span class="req">*</span></label><div class="input" style="width:220px">Medicina interna ▾</div></div>
+        <div class="field"><label>Médico <span class="req">*</span></label><div class="input" style="width:220px">Dr. Ruiz ▾</div><div class="help">Filtrado por especialidad</div></div>
+        <div class="field rel" id="w2-date"><i class="mk">4</i><label>Fecha <span class="req">*</span></label><div class="input" style="width:150px">05/10/2026 📅</div></div>
+      </div>
+      <div class="field"><label>Duración</label><div class="input" style="width:150px">30 min ▾</div><div class="help">15, 30, 45 o 60 minutos</div></div>
+      <div class="row" style="margin-top:20px"><span class="btn ghost">Cancelar</span><span class="btn primary rel" id="w2-next"><i class="mk">5</i>Ver horarios ›</span></div>
+      <div class="box rel" style="margin-top:18px;width:420px" id="w2-notfound"><i class="mk">6</i><b>Paciente no encontrado</b><p style="margin:6px 0 0">No encontramos a "Pérez Arana". Verifique el dato o regístrelo en el módulo Pacientes.</p></div>
+    </div>
+  </div>
+  <div class="notes"><h3>Anotaciones</h3><ol>
+    <li><b class="n">1</b><span><b>Indicador de pasos.</b> Cuatro pasos; los completados se pueden reabrir sin perder datos.</span></li>
+    <li><b class="n">2</b><span><b>Búsqueda de paciente.</b> Mínimo 3 caracteres; resultados en 300 ms tras dejar de escribir. DPI enmascarado salvo los 4 últimos dígitos.</span></li>
+    <li><b class="n">3</b><span><b>Validación.</b> Médico se habilita al elegir especialidad (evita <code>DOCTOR_SPECIALTY_MISMATCH</code> desde el origen).</span></li>
+    <li><b class="n">4</b><span><b>Fecha.</b> El calendario no permite fechas pasadas (previene <code>APPOINTMENT_PAST_DATE</code>).</span></li>
+    <li><b class="n">5</b><span><b>Continuar.</b> Deshabilitado hasta completar los campos obligatorios (*).</span></li>
+    <li><b class="n">6</b><span><b>Error recuperable.</b> Paciente inexistente: mensaje en línea con ayuda contextual; el módulo no registra pacientes (ASII-03).</span></li>
+  </ol></div>
+</section>
+
+<!-- W3 -->
+<section class="frame" id="w3">
+  <header>W3 · Nueva cita — Paso 3: validación de disponibilidad (Recepcionista)</header>
+  <div class="screen">
+    <div class="appbar"><div class="logo"></div><span>Citas médicas y agenda</span><div class="sp"></div><span class="user">Recepción · Hospital Central</span></div>
+    <div class="body">
+      <div class="stepper"><span class="on">1 Paciente</span><span class="on">2 Médico y fecha</span><span class="on">3 Horario</span><span>4 Confirmar</span></div>
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Dr. Ruiz · Medicina interna · 05/10/2026</h2><span class="rel" id="w3-help"><i class="mk">1</i>ⓘ</span></div>
+      <p class="mini">Horarios de 30 minutos. Seleccione uno.</p>
+      <div class="grid rel" id="w3-grid"><i class="mk">2</i>
+        <div class="slot">08:00</div><div class="slot busy">08:30</div><div class="slot busy">09:00</div><div class="slot">09:30</div>
+        <div class="slot">10:00</div><div class="slot sel">10:30</div><div class="slot">11:00</div><div class="slot busy">11:30</div>
+        <div class="slot">14:00</div><div class="slot">14:30</div><div class="slot busy">15:00</div><div class="slot">15:30</div>
+        <div class="slot">16:00</div><div class="slot">16:30</div><div class="slot busy">17:00</div><div class="slot">17:30</div>
+      </div>
+      <div class="row" style="margin-top:16px"><span class="btn ghost">‹ Atrás</span><span class="btn primary">Continuar ›</span></div>
+      <div class="side2" style="margin-top:18px">
+        <div class="box rel" id="w3-loading"><i class="mk">3</i><b>Cargando horarios</b><div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:8px"><div class="skel" style="height:30px"></div><div class="skel" style="height:30px"></div><div class="skel" style="height:30px"></div><div class="skel" style="height:30px"></div></div></div>
+        <div class="box rel" id="w3-empty"><i class="mk">4</i><b>Sin horarios el 05/10/2026</b><p style="margin:6px 0">El Dr. Ruiz no tiene horarios libres ese día.</p><span class="btn">Ver 06/10/2026 (5 libres)</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><h3>Anotaciones</h3><ol>
+    <li><b class="n">1</b><span><b>Ayuda contextual.</b> "¿Por qué no veo un horario?": fuera de jornada del médico u ocupado por otra cita.</span></li>
+    <li><b class="n">2</b><span><b>Grilla.</b> Horarios libres según la jornada (ASII-04, dependencia declarada en la semana 7); la validación definitiva la hace <code>RequestAppointment</code> al guardar. Libre: borde oscuro. Ocupado: gris claro, no seleccionable. Seleccionado: relleno oscuro.</span></li>
+    <li><b class="n">3</b><span><b>Carga.</b> Esqueleto de la grilla. Consultar no reserva el horario.</span></li>
+    <li><b class="n">4</b><span><b>Vacío.</b> Se ofrece la siguiente fecha con horarios en lugar de un callejón sin salida.</span></li>
+    <li><b class="n">·</b><span><b>Concurrencia.</b> La grilla es una foto del momento: si otro usuario toma el horario antes de confirmar, el paso 4 lo informa (W4) y se regresa aquí.</span></li>
+  </ol></div>
+</section>
+
+<!-- W4 -->
+<section class="frame" id="w4">
+  <header>W4 · Nueva cita — Paso 4: resumen y confirmación (con error de concurrencia 409)</header>
+  <div class="screen rel">
+    <div class="appbar"><div class="logo"></div><span>Citas médicas y agenda</span><div class="sp"></div><span class="user">Recepción · Hospital Central</span></div>
+    <div class="toast red" id="w4-toast"><i class="mk" style="left:-9px">4</i><b>Error</b><br>Otro usuario tomó ese horario. Elija otro.</div>
+    <div class="body">
+      <div class="stepper"><span class="on">1 Paciente</span><span class="on">2 Médico y fecha</span><span class="on">3 Horario</span><span class="on">4 Confirmar</span></div>
+      <div class="box rel" style="width:520px" id="w4-summary"><i class="mk">1</i>
+        <div class="kv"><b>Paciente</b><span>Ana Lucía Pérez · Exp. 10-4471</span><b>Médico</b><span>Dr. Ruiz · Medicina interna</span><b>Fecha y hora</b><span>05/10/2026 10:30 – 11:00</span></div>
+        <span class="mini">Editar paciente · Editar horario</span>
+      </div>
+      <div class="field rel" style="margin-top:14px" id="w4-reason"><i class="mk">2</i><label>Motivo de la consulta</label>
+        <div class="input" style="width:520px;height:60px">Control de presión arterial</div><div class="help">Opcional · 27/500</div></div>
+      <div class="row"><span class="btn ghost">‹ Atrás</span><span class="btn primary rel" id="w4-submit"><i class="mk">3</i>Agendar cita</span></div>
+      <p class="mini" style="margin-top:14px">La cita se crea en estado <b>pendiente</b> hasta que Enfermería confirme la asistencia.</p>
+    </div>
+  </div>
+  <div class="notes"><h3>Anotaciones</h3><ol>
+    <li><b class="n">1</b><span><b>Resumen.</b> Todo lo que se va a guardar, con enlaces para corregir sin reiniciar el flujo.</span></li>
+    <li><b class="n">2</b><span><b>Motivo de la consulta.</b> Opcional, hasta 500 caracteres (regla de <code>StoreAppointmentRequest</code>). Contador visible.</span></li>
+    <li><b class="n">3</b><span><b>Envío.</b> Al pulsar: "Agendando…", botón deshabilitado para impedir doble clic. Se reutiliza la <code>Idempotency-Key</code> si se reintenta.</span></li>
+    <li><b class="n">4</b><span><b>Error 409 <code>APPOINTMENT_SLOT_TAKEN</code>.</b> Aviso en la esquina superior; se recarga la grilla (W3) conservando paciente, médico y motivo.</span></li>
+    <li><b class="n">·</b><span><b>Otros errores recuperables.</b> 422 fuera de jornada → volver a W3. Sin conexión → "No pudimos confirmar el registro. Reintentar" (no duplica). 401 → borrador en memoria e inicio de sesión.</span></li>
+  </ol></div>
+</section>
+
+<!-- W5 -->
+<section class="frame" id="w5">
+  <header>W5 · Éxito — Cita registrada (Recepcionista)</header>
+  <div class="screen rel">
+    <div class="appbar"><div class="logo"></div><span>Citas médicas y agenda</span><div class="sp"></div><span class="user">Recepción · Hospital Central</span></div>
+    <div class="toast green rel" id="w5-toast" style="position:absolute"><i class="mk">1</i>✓ Cita agendada. Código CT-000184</div>
+    <div class="body">
+      <h1>Agenda del día</h1>
+      <table>
+        <tr><th>Hora</th><th>Paciente</th><th>Médico</th><th>Estado</th><th></th></tr>
+        <tr><td>10:00</td><td>José R. L.</td><td>Dr. Ruiz</td><td><span class="dot d-c"></span></td><td>Ver ›</td></tr>
+        <tr style="background:#f3f3f3" class="rel" id="w5-row"><td>10:30</td><td>Ana L. P.</td><td>Dr. Ruiz</td><td><span class="dot d-p"></span></td><td>Ver ›</td></tr>
+        <tr><td>11:00</td><td>—</td><td>Dr. Ruiz</td><td></td><td></td></tr>
+      </table>
+      <div class="box" style="margin-top:16px;width:520px"><b class="rel" id="w5-next">Siguiente paso</b><p style="margin:6px 0 0">Enfermería verá la cita en "Pendientes" para confirmar la asistencia.</p></div>
+    </div>
+  </div>
+  <div class="notes"><h3>Anotaciones</h3><ol>
+    <li><b class="n">1</b><span><b>Mensaje de éxito.</b> Aviso temporal (5 s) con el código de la cita.</span></li>
+    <li><b class="n">·</b><span><b>Resultado visible.</b> Se vuelve a la agenda con la nueva fila resaltada en estado pendiente.</span></li>
+    <li><b class="n">·</b><span><b>Qué sigue.</b> Se explica el siguiente paso del proceso (confirmación por Enfermería).</span></li>
+    <li><b class="n">·</b><span><b>Estado del borrador.</b> Se descarta; la <code>Idempotency-Key</code> se renueva para la próxima cita.</span></li>
+  </ol></div>
+</section>
+
+<!-- W6 -->
+<section class="frame" id="w6">
+  <header>W6 · Detalle de cita — Confirmar asistencia (Enfermera) y cancelar (Recepcionista)</header>
+  <div class="screen rel">
+    <div class="appbar"><div class="logo"></div><span>Citas médicas y agenda</span><div class="sp"></div><span class="user">Recepción · Hospital Central</span></div>
+    <div class="body">
+      <h1>Cita CT-000184 <span class="dot d-p"></span></h1>
+      <div class="kv"><b>Paciente</b><span>Ana Lucía Pérez · Exp. 10-4471</span><b>Médico</b><span>Dr. Ruiz</span><b>Fecha y hora</b><span>05/10/2026 10:30</span><b>Motivo</b><span>Control de presión arterial</span></div>
+      <div class="row rel" id="w6-actions"><i class="mk">1</i><span class="btn primary">Confirmar asistencia</span><span class="btn">Cancelar</span></div>
+    </div>
+    <div class="modal-bg"><div class="modal rel" id="w6-modal"><i class="mk">2</i>
+      <h2 style="margin-top:0">¿Cancelar la cita?</h2>
+      <p>Ana Lucía Pérez · 05/10/2026 10:30 · Dr. Ruiz</p>
+      <div class="field rel" id="w6-reason"><i class="mk">3</i><label>Motivo <span class="req">*</span></label><div class="input err" style="height:54px"></div><div class="errtxt">Campo requerido</div></div>
+      <div class="row rel" style="justify-content:flex-end" id="w6-buttons"><i class="mk">4</i><span class="btn">Cancelar</span><span class="btn primary">Aceptar</span></div>
+    </div></div>
+  </div>
+  <div class="notes"><h3>Anotaciones</h3><ol>
+    <li><b class="n">1</b><span><b>Acciones por rol.</b> Enfermera: solo "Confirmar asistencia" (elige medio de contacto). Recepcionista: confirmar y cancelar. Médico: sin acciones.</span></li>
+    <li><b class="n">2</b><span><b>Confirmación de acción destructiva.</b> Diálogo modal con los datos de la cita que se cancela.</span></li>
+    <li><b class="n">3</b><span><b>Validación.</b> Motivo obligatorio, de 3 a 500 caracteres (<code>CancelAppointmentRequest</code>). Se muestra al enviar vacío.</span></li>
+    <li><b class="n">4</b><span><b>Botones del diálogo.</b> "Cancelar" cierra el diálogo; "Aceptar" cancela la cita.</span></li>
+    <li><b class="n">·</b><span><b>Error 422 transición inválida.</b> "Esta cita ya fue cancelada o confirmada por otra persona." Se recarga el detalle.</span></li>
+    <li><b class="n">·</b><span><b>Protección de datos.</b> El motivo solo se ve en el detalle, para roles con <code>appointments.view</code>.</span></li>
+  </ol></div>
+</section>
+
+</body>
+</html>

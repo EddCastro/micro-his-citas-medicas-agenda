@@ -1,0 +1,47 @@
+@startuml
+title User flow - Recepcionista (y Admin)\nSolicitar cita con validacion de disponibilidad
+
+skinparam shadowing false
+skinparam defaultFontName DejaVu Sans
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBackgroundColor #F2F2F2
+
+start
+:Inicio: Agenda del dia (W1);
+note right: Estado de carga: esqueleto de la lista\nEstado vacio: "No hay citas para hoy" + boton Nueva cita
+:Pulsa "Nueva cita";
+:Paso 1 - Buscar paciente (W2);
+if (Paciente encontrado?) then (si)
+else (no)
+  :Mensaje: "No encontramos al paciente"\nAyuda: registrarlo en el modulo Pacientes (ASII-03);
+  stop
+endif
+:Paso 2 - Especialidad, medico y fecha (W2);
+:Paso 3 - Grilla de horarios (W3);
+note right: Carga: esqueleto de la grilla\nSolo se consultan horarios, no se reserva nada
+repeat
+  :Consulta horarios libres;
+  backward :Estado vacio: "Sin horarios el <fecha>"\nAccion: "Ver siguiente fecha con horarios";
+repeat while (Hay horarios libres?) is (no) not (si)
+:Selecciona un horario;
+:Paso 4 - Revisar resumen\ny motivo opcional (max. 500) (W4);
+:Pulsa "Agendar cita";
+:Enviando... boton deshabilitado\n(misma Idempotency-Key si reintenta);
+switch (Respuesta del servidor)
+case (201)
+  :Exito (W5): cita PENDIENTE de confirmacion;
+  stop
+case (409 SLOT_TAKEN)
+  :Error recuperable: "Otro usuario tomo ese horario"\nSe recarga la grilla, se conservan paciente, medico y motivo;
+  detach
+case (422 FUERA DE JORNADA)
+  :Error recuperable: "El medico no atiende a esa hora";
+  detach
+case (Sin conexion / tiempo agotado)
+  :"No pudimos confirmar el registro"\nReintentar con la misma clave (no duplica);
+  detach
+case (401 sesion expirada)
+  :Borrador conservado; iniciar sesion y continuar;
+  detach
+endswitch
+@enduml
