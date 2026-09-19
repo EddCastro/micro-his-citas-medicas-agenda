@@ -632,6 +632,15 @@
   function avisoHtml(tipo, titulo, texto) {
     return `<div class="alert ${tipo}" ${tipo === 'error' ? 'role="alert"' : 'role="status"'} tabindex="-1"><h2>${titulo}</h2>${texto ? `<p>${texto}</p>` : ''}</div>`;
   }
+  // Trampa de foco: Tab y Shift+Tab circulan dentro del diálogo abierto (H-09)
+  document.querySelectorAll('dialog').forEach(d => d.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const f = [...d.querySelectorAll('button, textarea, input:checked, input[type=text], select, a[href]')].filter(x => !x.disabled);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }));
   // Diálogo de cancelación (H-06, H-09): foco inicial, Escape, retorno de foco
   $('#btnKeep').onclick = () => $('#dlgCancel').close('keep');
   $('#dlgCancel').addEventListener('close', () => { if ($('#dlgCancel').returnValue !== 'done' && origenFoco && $('#' + origenFoco)) $('#' + origenFoco).focus(); $('#dlgCancel').returnValue = ''; });
