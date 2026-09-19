@@ -14,9 +14,10 @@ médico al mismo tiempo.
 
 **Qué pasa.** Elige las 11:00 para el Dr. Ruiz, escribe el motivo y pulsa
 **Agendar cita**. Entre la consulta de horarios y el envío, la otra
-recepcionista reservó las 11:00. El servidor responde
-`409 APPOINTMENT_SLOT_TAKEN` (el bloqueo por médico y día de la semana 6
-impide la cita doble).
+recepcionista reservó las 11:00. El bloqueo por médico y día de la semana 6
+impide la cita doble y el servidor rechaza la segunda solicitud: hoy con 422 y
+un mensaje; con el `ErrorMapper` propuesto en la semana 7, con
+`409 APPOINTMENT_SLOT_TAKEN`.
 
 ![E1](pantallas/E1-conflicto-409.png)
 
