@@ -42,7 +42,7 @@ RECORTES = {
     "H-05-exito-temporal": ["#w5 .screen"],
     "H-06-cancelar-ambiguo": ["#w6 .screen"],
     "H-07-fecha-ambigua": ["#w2-date"],
-    "H-08-obligatorio-generico": ["#w4-reason"],
+    "H-08-obligatorio-generico": ["#w6-reason"],
     "H-10-ayuda-sin-nombre": ["#w3-help"],
 }
 

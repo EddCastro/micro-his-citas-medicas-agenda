@@ -117,15 +117,16 @@ la pantalla no muestra.
 
 ## H-08 · Obligatorio marcado solo con asterisco rojo y error genérico
 
-| Pantalla | W2, W4, W6 | Severidad | **2** |
+| Pantalla | W2, W6 | Severidad | **2** |
 |---|---|---|---|
 | Criterios | WCAG 1.3.1, 3.3.2, 3.3.3 · Nielsen 9 | Afecta | Citas, cancelación |
 
 ![H-08](evidencia/H-08-obligatorio-generico.png)
 
-El asterisco no se explica en ninguna parte y depende del color. "Campo
-requerido" no dice qué campo ni cuántos caracteres se esperan, y no está
-especificado que el mensaje quede asociado al campo (`aria-describedby`).
+El asterisco no se explica en ninguna parte y depende del color. En el motivo
+de cancelación, "Campo requerido" no dice qué campo ni que se esperan de 3 a
+500 caracteres, y no está especificado que el mensaje quede asociado al campo
+(`aria-describedby`).
 
 ---
 
